@@ -50,15 +50,15 @@ done
 ### init
 Bu dosya ilk çalıştırılan dosyadır. Sırası ile şunları gerçekleştirir.
 
-* dev, proc ve sys dizinlerini bağla
+1. dev, proc ve sys dizinlerini bağla
 
-* Modülleri yükle (devd ile)
+2. Modülleri yükle (devd ile)
 
-* Kurulu sistemi /proc/cmdline içerisindeki root=xxx parametresinden bul ve bağla
+3. Kurulu sistemi /proc/cmdline içerisindeki root=xxx parametresinden bul ve bağla
 
-* Kendini ram üzerinden temizle
+4. Kendini ram üzerinden temizle
 
-* Kurulu sisteme geçiş yap
+5. Kurulu sisteme geçiş yap
 
 
 Basit bir init örneği aşağıdaki gibidir:
@@ -87,5 +87,36 @@ umount /sys
 
 # Asıl sisteme geç
 exec switch_root /root /sbin/init
+```
+
+#### /proc/cmdline okunması
+Çekirdeğe verilen parametreler */proc/cmdline* içerisinde yer alır. Örneğin:
+```
+BOOT_IMAGE=/boot/vmlinuz-6.12.113+deb13-amd64 root=UUID=6295c001-c4d7-4e07-acd9-7e6806a8594c ro quiet splash
+```
+
+* `root=...` parametresi sistemin kurulu olduğu diski belirtir. disklerin konumu (/dev/sda2 gibi) değişebileceği için değişmeyen **UUID** değeri ile belirtilebilir. Initramfs sistemimiz bu UUID değerinden hangi bölüm olduğunu tespit edip açılışa o disk üzerinden devam etmelidir.
+
+* Varsa diğer parametreler (örneğin btrfs için `subvol=@` gibi) dikkate alınarak veya sistemin açılış esnasında ayarlanan özel parametreler (örneğin canlı sistem için `boot=live` parametresi) kullanılabilir.
+
+* `ro` parametresi diskin sadece okunabilir olarak bağlanması gerektiğini belirtir. Eğer bunun yerine `rw` kullanılırsa disk yazılabilir olarak bağlanmalıdır. Diğer disklerin bağlanması ve bağlanma durumu için asıl sistem açılış esnasında `/etc/fstab` dosyasına bakar. Bu sebeple initramfs yalnızca çalıştırılacak olan sistemin bulunduğu diski bağlar. (Örneğin ayrı bir ev dizini diski varsa bağlanmaz)
+
+* `quiet` parametresi çekirdek tarafından dikkate alınan ve ekrana daha az detaylı çıktı basılmasını sağlar. Bu parametresi initramfs içerisinde çıktıların ne seviyede basılacağını belirlemek için de kullanabilirsiniz.
+
+* `splash` parametresi varsa **plymouth** servisini başlatmak için kullanılır. Bu sayede açılış sırasında kullanıcı akan yazılar yerine açılış animasyonu görür.
+
+## initramfs oluşturulması
+Linux dağıtımlarında initramfs oluşturmak için çeşitli araçlardan faydalanılır. (Debian için initramfs-tools, alpine için mkinitfs, archlinux için mkinitcpio, fedora için dracut gibi)
+Bu araçlar çekirdeğin açılış için gereken dosyalarını ve ihtiyaç duyulan komutları ve bağımlı olduğu kütüphaneleri initramfs imajı içerisine ekler.
+
+Bir initramfs dosyasını açmak için:
+```sh
+# xz ile sıkıştırılmış olan bir initramfs imajı için
+xzcat /boot/initrd.img-6.12.113+deb13-amd64 | cpio -idmv
+```
+
+Bir initramfs imajı oluşturmak için:
+```sh
+find . | cpio -H newc -o | xz -9 > ../inird.img
 ```
 
