@@ -5,6 +5,16 @@ Init sisteminin görevi sistem için gereken servisleri başlatmak, kullanıcıd
 
 Populer init sistemleri: systemd, sysv-init, openrc, s6, runit, busybox init ...
 
+Bu yazıda sysv-init,  systemd, openrc  ve busybox init üzerine değineceğiz. Başlıca aşağıdaki gibi kıyaslanabilir.
+
+| Servis yöneticisi | Paralel Başlatma |  Hafiflik | Bağımlılık Yönetimi | Servis dosyası | Kullanım amacı |
+|-------------------|------------------|----------|---------------------|----------------|----------------|
+| systemd           | Var              | Karmaşık | Var                 | Unit dosyaları | Genel amaçlı   |
+| sysv-init         | -                | Orta     | -                   | Shell script   | Eski / Geleneksel dağıtımlar|
+| openrc            | Var              | Hafif    | Var                 | Shell script   | Genel amaçlı   |
+| busybox init      | -                | Minimal  | -                   | -              | Gömülü sistemler / Düşük boyutlu sistemler |
+
+
 ## Sysv-init
 Köklü ve uzun yıllardır kullanılan bir init sistemidir.
 
