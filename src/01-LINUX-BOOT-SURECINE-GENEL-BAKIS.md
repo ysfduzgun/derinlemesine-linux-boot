@@ -1,421 +1,789 @@
-# Linux Önyükleme (Boot) Süreci
+# Linux Çekirdeği (Kernel)
 
-Bilgisayarın güç düğmesine basılmasıyla başlayan ve işletim sisteminin kullanıcı etkileşimine hazır hâle gelmesine kadar devam eden işlemler bütününe **önyükleme (boot) süreci** denir.
+Önyükleyici (Bootloader), çekirdek imajını (`vmlinuz`) ve varsa başlangıç dosya sistemini (`initramfs`) belleğe yükleyerek kontrolü Linux çekirdeğine devreder.
 
-Linux sistemlerde bu süreç; donanımın hazırlanması, anakart firmware'inin önyükleme aygıtını belirlemesi, önyükleyicinin çekirdeği belleğe yüklemesi, çekirdeğin ilk kullanıcı alanını başlatması ve init sisteminin işletim sistemini kullanılabilir hâle getirmesi gibi aşamalardan oluşur.
+Bu noktadan itibaren işletim sisteminin en temel bileşeni olan Linux Kernel (Çekirdek) çalışmaya başlar.
 
-Bu aşamalar genel olarak birbirini takip etse de bazı işlemler paralel yürütülebilir. Kullanılan donanıma, dağıtıma, önyükleyiciye, init sistemine ve disk yapılandırmasına göre ayrıntılar değişiklik gösterebilir.
+Kernel, donanım ile yazılım arasındaki iletişimi sağlayan ve sistem kaynaklarını yöneten ana bileşendir. İşlemci, bellek, depolama aygıtları, ağ kartları ve diğer donanımların yönetiminden sorumludur.
 
-## 1. POST ve Donanım Kontrolü (Power-On Self-Test)
+Linux çekirdeğinin temel görevleri şunlardır:
 
-Bilgisayarın güç düğmesine basıldığında işlemciye güç verilir ve işlemci, anakart firmware'inin (BIOS/UEFI) bulunduğu bellek alanındaki başlangıç kodunu çalıştırmaya başlar.
+- **İşlem yönetimi:** Çalışan programların süreçlerini oluşturur, sonlandırır ve işlemci zamanını yönetir.
+- **Bellek yönetimi:** Fiziksel ve sanal belleğin kullanımını düzenler.
+- **Donanım yönetimi:** Donanım bileşenleriyle sürücüler aracılığıyla iletişim kurar.
+- **Dosya sistemi yönetimi:** Dosya sistemlerine erişimi ve VFS altyapısını yönetir.
+- **Ağ yönetimi:** Ağ protokollerini ve ağ aygıtlarının çalışma mekanizmalarını yönetir.
+- **Güvenlik ve erişim denetimi:** Süreçlerin ve kullanıcıların sistem kaynaklarına erişimini kontrol eder.
 
-Bu aşamada POST (Power-On Self-Test) adı verilen başlangıç donanım kontrol işlemleri gerçekleştirilir.
+Bu bölümde, çekirdek imajının belleğe nasıl yüklendiğini, işlemcinin çalışma modlarının nasıl hazırlandığını, çekirdek alt sistemlerinin nasıl ilklendirildiğini ve kullanıcı alanının nasıl başlatıldığını inceleyeceğiz.
 
-POST işleminin temel amacı, bilgisayarın önyükleme yapabilmesi için gerekli temel donanım bileşenlerinin çalışır durumda olup olmadığını kontrol etmektir.
+## 1. Vmlinuz Anatomisi
 
-Bu aşamada gerçekleştirilebilen başlıca işlemler şunlardır:
-
-- **İşlemci (CPU):** İşlemcinin başlangıç durumunun ve temel çalışma koşullarının kontrol edilmesi.
-- **Bellek (RAM):** Belleğin algılanması ve başlangıç bellek kontrollerinin gerçekleştirilmesi.
-- **Ekran birimi:** Görüntü çıkışının hazırlanması ve gerektiğinde ekran kartının başlatılması.
-- **Depolama aygıtları:** SATA, NVMe ve diğer depolama denetleyicilerinin algılanması.
-- **Temel çevre birimleri:** Klavye ve önyükleme için gerekli diğer donanım bileşenlerinin hazırlanması.
-
-Donanım yapılandırmasına ve firmware üreticisine bağlı olarak POST sırasında bir hata tespit edilirse sistem açılışı durdurulabilir. Hata, anakartın sesli uyarıları, hata LED'leri veya ekranda gösterilen hata mesajları aracılığıyla kullanıcıya bildirilebilir.
-
-POST işleminin başarıyla tamamlanması, bilgisayarın bütün donanımlarının kusursuz çalıştığı anlamına gelmez. Bu aşama yalnızca başlangıç için gerekli kontrolleri gerçekleştirir.
-
-**Bu aşamanın sonucu:** Donanımın temel başlangıç kontrolleri tamamlanır ve kontrol, önyükleme işlemlerini yönetecek olan BIOS/UEFI firmware'ine geçer.
-
-## 2. Anakart Yazılımı (BIOS/UEFI)
-
-POST işleminin ardından BIOS veya UEFI firmware'i, sistemin önyükleme yapabilmesi için gerekli donanım bileşenlerini hazırlar ve hangi aygıttan başlatılacağını belirler.
-
-BIOS (Basic Input/Output System), geleneksel bilgisayarlarda kullanılan firmware yaklaşımıdır. UEFI (Unified Extensible Firmware Interface) ise modern sistemlerde BIOS'un yerini alan, daha gelişmiş önyükleme ve donanım yönetimi olanakları sağlayan firmware standardıdır.
-
-İki yaklaşım arasındaki temel farklardan biri, işletim sisteminin önyükleme koduna nasıl ulaşıldığıdır.
-
-### Legacy BIOS (Geleneksel BIOS)
-
-BIOS, yapılandırılmış önyükleme sırasına göre depolama aygıtını seçer ve seçilen diskin ilk sektöründeki MBR (Master Boot Record) önyükleme kodunu belleğe yükleyerek çalıştırır.
-
-MBR tabanlı geleneksel önyükleme yapısında ilk aşama oldukça sınırlı bir kod alanına sahiptir. Bu nedenle GRUB gibi önyükleyiciler genellikle birden fazla aşamada yüklenir.
-
-### UEFI (Unified Extensible Firmware Interface)
-
-UEFI, BIOS'tan farklı olarak dosya sistemlerini tanıyabilir ve doğrudan EFI uygulamalarını çalıştırabilir.
-
-Bu yapıda:
-
-1. Firmware, NVRAM üzerinde kayıtlı önyükleme girdilerini (Boot Entries) kontrol eder.
-2. Seçilen önyükleme girdisine ait disk ve bölüm belirlenir.
-3. EFI System Partition (ESP) içerisindeki ilgili EFI uygulaması bulunur.
-4. Önyükleyici veya doğrudan başlatılabilen bir işletim sistemi yükleyicisi çalıştırılır.
-
-EFI System Partition genellikle FAT32 dosya sistemiyle biçimlendirilir ve içerisinde önyükleyicilere ait dosyalar bulunur.
-
-Örnek EFI bölüm yapısı:
+Modern Linux dağıtımlarında çekirdek imajı genellikle aşağıdaki dizinde bulunur:
 
 ```text
-/EFI
-├── BOOT
-│   └── BOOTX64.EFI
-├── GRUB
-│   └── grubx64.efi
-└── systemd
-    └── systemd-bootx64.efi
+/boot/vmlinuz-<kernel-version>
 ```
-
-UEFI sistemlerde Secure Boot özelliği etkinse başlatılacak EFI uygulamalarının imzaları doğrulanabilir. Böylece önyükleme zincirinin güvenilirliği artırılabilir.
-
-**Bu aşamanın sonucu:** Firmware, belirlenen önyükleme aygıtındaki önyükleyiciyi çalıştırır ve kontrolü işletim sisteminin başlatılmasını sağlayacak yazılıma devreder.
-
-## 3. Önyükleyici (Bootloader)
-
-Önyükleyici, BIOS/UEFI tarafından başlatılan ve işletim sisteminin çekirdeğini çalıştırılmaya hazırlayan yazılımdır.
-
-Linux sistemlerde yaygın olarak kullanılan önyükleyiciler şunlardır:
-
-- GRUB (GRand Unified Bootloader)
-- systemd-boot
-- Limine
-- Syslinux
-
-Önyükleyicinin temel görevi, işletim sisteminin çekirdek dosyasını ve gerekli başlangıç dosyalarını belleğe yükleyerek çekirdeğin çalıştırılmasını sağlamaktır.
-
-GRUB gibi bazı önyükleyiciler kullanıcıya bir menü sunarak birden fazla işletim sistemi veya çekirdek sürümü arasından seçim yapılmasına imkân tanır.
-
-Örneğin GRUB menüsünde şu seçenekler bulunabilir:
-
-- Normal Linux çekirdeğiyle başlatma.
-- Önceki bir çekirdek sürümüyle başlatma.
-- Kurtarma modunda başlatma.
-- Başka bir işletim sistemini başlatma.
-
-Önyükleyici, seçilen yapılandırmaya göre aşağıdaki dosyaları belleğe yükleyebilir:
-
-### Linux Kernel (vmlinuz)
-
-Linux çekirdeğinin önyükleme için kullanılan sıkıştırılmış veya paketlenmiş çekirdek imajıdır. `vmlinuz` ismi yaygın bir dosya adlandırma geleneğidir; bütün Linux dağıtımlarında zorunlu bir dosya adı değildir.
-
-Çekirdek imajı, donanım kaynaklarının yönetilmesi ve işletim sisteminin temel işlevlerinin yürütülmesinden sorumludur.
-
-### Initramfs (Initial RAM File System)
-
-Çekirdeğin asıl kök dosya sistemine erişebilmesi için ihtiyaç duyduğu erken kullanıcı alanı araçlarını ve dosyalarını içeren başlangıç dosya sistemidir.
-
-### Kernel Parameters (Çekirdek Parametreleri)
-
-Önyükleyici, çekirdeğe başlangıç sırasında kullanacağı parametreleri de iletir.
 
 Örneğin:
 
 ```text
-root=UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-ro
-quiet
-splash
+/boot/vmlinuz-6.12.113+deb13-amd64
 ```
 
-Burada:
+Buradaki dosya adı geleneksel bir adlandırma biçimidir. `vmlinuz` isminin açılımı konusunda yaygın açıklamalar bulunsa da dosya adındaki harfler, modern çekirdek imajının iç yapısını kesin olarak tanımlamaz.
 
-- `root=`: Asıl kök dosya sisteminin bulunduğu bölümü belirtir.
-- `ro`: Kök dosya sisteminin başlangıçta salt okunur bağlanmasını ister.
-- `quiet`: Açılış sırasında ekrana yazdırılan mesajları azaltır.
-- `splash`: Destekleyen sistemlerde açılış ekranı gösterilmesini sağlar.
+Linux çekirdeğinin çalıştırılabilir dosyası olan `vmlinux`, genellikle sıkıştırılmamış ELF biçimindeki çekirdek imajını ifade eder. `vmlinuz` ise önyükleme için hazırlanmış, genellikle sıkıştırılmış çekirdek imajıdır.
 
-Önyükleyici, gerekli dosyaları belleğe yükledikten sonra çekirdeğin çalıştırılmasını sağlar.
+### bzImage Nedir?
 
-**Bu aşamanın sonucu:** Linux çekirdeği ve varsa initramfs belleğe yüklenir. Kontrol çekirdeğe devredilir.
+x86 ve x86-64 sistemlerde yaygın olarak kullanılan çekirdek imajı biçimi `bzImage` olarak adlandırılır.
 
-## 4. Çekirdek (Kernel) Başlangıcı
+Buradaki `bz` ifadesi, imajın mutlaka bzip2 algoritmasıyla sıkıştırıldığı anlamına gelmez. Tarihsel olarak büyük çekirdek imajlarını düşük bellek alanından bağımsız biçimde yükleyebilmek amacıyla geliştirilen bir biçimdir.
 
-Önyükleyicinin kontrolü devretmesiyle Linux çekirdeğinin başlangıç süreci başlar.
+bzImage, çekirdeğin önyükleme sırasında ihtiyaç duyduğu hazırlık kodlarını ve sıkıştırılmış çekirdek gövdesini bir arada barındırır.
 
-Linux çekirdeği, işletim sisteminin donanım ile yazılım arasındaki temel yönetim katmanıdır. İşlemci, bellek, depolama aygıtları, ağ kartları ve diğer donanım bileşenleri üzerindeki işlemleri yönetir.
+Genel yapısı şu bileşenlerden oluşur:
 
-Çekirdeğin başlangıç aşamasında gerçekleştirilen başlıca işlemler şunlardır:
-
-### 1. Çekirdeğin bellekte hazırlanması
-
-Önyükleyici tarafından belleğe yüklenen çekirdek imajı, mimariye ve imaj biçimine bağlı olarak gerekli açma ve başlatma işlemlerinden geçirilir. x86 sistemlerde sıkıştırılmış çekirdek imajı kendi açılış kodu aracılığıyla açılarak çalışmaya hazırlanır.
-
-### 2. Bellek yönetiminin başlatılması
-
-Çekirdek, fiziksel ve sanal bellek yönetimini başlatır. Sistem belleğinin yönetilebilmesi için gerekli temel bellek yapılarını oluşturur.
-
-### 3. İşlemci ve kesme mekanizmalarının hazırlanması
-
-İşlemci çekirdekleri, zamanlayıcılar ve donanım kesmeleri için gerekli altyapı hazırlanır.
-
-### 4. Donanım bileşenlerinin algılanması
-
-Çekirdek, sistemdeki donanımları tanımaya ve gerekli sürücüleri yüklemeye başlar. Bu işlemler derleme sırasında çekirdeğe dahil edilmiş sürücülerle veya daha sonra yüklenen kernel modülleriyle gerçekleştirilebilir.
-
-### 5. Temel dosya sisteminin oluşturulması
-
-Çekirdek, başlangıç aşamasında kullanacağı geçici kök dosya sistemini hazırlar. Bu yapı `rootfs` olarak adlandırılır.
-
-Çekirdeğin asıl kök dosya sistemine henüz erişemediği durumlarda initramfs içerisindeki araçlar devreye girerek bu erişimi mümkün hâle getirir.
-
-Çekirdek başlangıç sürecinin sonunda ilk kullanıcı alanı sürecini çalıştırır. Initramfs kullanılıyorsa bu süreç genellikle initramfs içerisindeki `/init` programıdır.
-
-**Bu aşamanın sonucu:** Çekirdek temel çalışma altyapısını hazırlar ve erken kullanıcı alanını başlatır.
-
-## 5. initramfs ve Asıl Diskin Bağlanması
-
-Initramfs (Initial RAM File System), Linux çekirdeğinin gerçek kök dosya sistemine erişebilmesi için gereken araçları ve yapılandırma dosyalarını içeren geçici bir dosya sistemidir.
-
-Önyükleyici tarafından belleğe yüklenen initramfs imajı, çekirdek tarafından açılır ve geçici kök dosya sistemine yerleştirilir.
-
-Bu ortam, sistemin gerçek kök dizini henüz bağlanmadan önce gerekli işlemlerin gerçekleştirilebilmesini sağlar.
-
-Initramfs içerisinde bulunabilecek bileşenler şunlardır:
-
-- Donanım sürücülerine ait kernel modülleri.
-- Depolama aygıtlarını algılamak için gerekli araçlar.
-- LVM ve RAID yönetim araçları.
-- LUKS ve dm-crypt şifreleme araçları.
-- Dosya sistemi yönetim araçları.
-- udev kuralları ve aygıt yönetim bileşenleri.
-- Başlangıç betikleri ve yapılandırma dosyaları.
-
-### Asıl kök dosya sisteminin bulunması
-
-Initramfs içerisindeki başlangıç programı, çekirdek parametrelerinde belirtilen kök dosya sisteminin konumunu belirler.
-
-Örneğin kök dosya sistemi doğrudan bir NVMe bölümünde bulunabilir:
-
-```text
-/dev/nvme0n1p2
-```
-
-Ancak daha karmaşık disk yapılandırmalarında doğrudan bölümün bağlanması yeterli olmayabilir.
-
-### Şifrelenmiş disklerin açılması
-
-Kök dosya sistemi LUKS (Linux Unified Key Setup) ile şifrelenmişse, initramfs içerisindeki araçlar kullanıcıdan parola isteyebilir.
-
-Bu parola, dm-crypt altyapısı aracılığıyla şifrelenmiş blok aygıtının açılması için kullanılır.
-
-Örneğin:
-
-```bash
-cryptsetup luksOpen /dev/nvme0n1p2 cryptroot
-```
-
-Bu işlem başarılı olduğunda şifrelenmiş bölümün içeriğine erişilebilen yeni bir aygıt oluşturulur:
-
-```text
-/dev/mapper/cryptroot
-```
-
-### LVM ve RAID yapılandırmaları
-
-Kök dosya sistemi LVM üzerinde bulunuyorsa mantıksal birimlerin etkinleştirilmesi gerekebilir.
-
-Benzer şekilde yazılımsal RAID kullanılıyorsa RAID dizisinin bir araya getirilmesi gerekir.
-
-Bu işlemlerin tamamı, gerçek kök dosya sistemi kullanılabilir hâle gelmeden önce gerçekleştirilebilir.
-
-### Gerçek kök dosya sisteminin bağlanması
-
-Gerekli aygıtlar hazırlandıktan sonra gerçek kök dosya sistemi geçici bir dizine bağlanır.
-
-Örneğin:
-
-```bash
-mount /dev/mapper/cryptroot /sysroot
-```
-
-Buradaki `/sysroot` örnek bir bağlama noktasıdır. Kullanılan initramfs altyapısına göre `/new_root` gibi farklı dizinler de tercih edilebilir.
-
-Initramfs yalnızca disk şifrelemesini çözmek için kullanılmaz. Karmaşık depolama yapılandırmalarını hazırlamak, dosya sistemini kontrol etmek ve hazırda bekletmeden dönüş gibi işlemleri gerçekleştirmek için de kullanılabilir.
-
-**Bu aşamanın sonucu:** Gerçek kök dosya sistemi erişilebilir hâle getirilir ve sistemin asıl kullanıcı alanına geçiş için gerekli hazırlıklar tamamlanır.
-
-## 6. Kök Dizine Geçiş (switch_root / pivot_root)
-
-Initramfs ortamında gerekli işlemler tamamlandıktan sonra sistemin geçici kök dosya sisteminden gerçek kök dosya sistemine geçmesi gerekir.
-
-Bu işleme *root filesystem switch* veya kök dosya sistemi geçişi denir.
-
-Bu noktada iki önemli mekanizma karşımıza çıkar:
-
-### pivot_root
-
-Linux çekirdeği tarafından sağlanan `pivot_root()` sistem çağrısı, mevcut kök dosya sistemini başka bir kök dosya sistemine taşıyarak yeni kök dizinin kullanılmasını sağlar.
-
-Eski kök dosya sistemi ayrı bir dizine taşınabilir ve daha sonra bağlantısı kesilebilir.
-
-### switch_root
-
-`switch_root`, özellikle initramfs ortamlarında kullanılan bir kullanıcı alanı aracıdır.
-
-Yeni kök dosya sistemine geçiş yaparken eski initramfs içeriğinin temizlenmesine ve gerçek kök dosya sistemindeki init programının çalıştırılmasına yardımcı olur.
-
-Örneğin:
-
-```bash
-switch_root /sysroot /sbin/init
-```
-
-Bu komut, yeni kök dosya sistemi olarak `/sysroot` dizinini kullanır ve oradaki `/sbin/init` programını başlatır.
-
-Kullanılan initramfs altyapısına göre komutun uygulanışı ve bağlama noktaları değişebilir.
-
-Önemli bir ayrıntı: Bu işlem sırasında geçici dosya sisteminin bütün içeriğinin mutlaka RAM'den fiziksel olarak silindiğini düşünmemek gerekir. Burada yapılan temel işlem, sistemin kök dosya sistemi referansının değiştirilmesi ve artık gerekmeyen geçici ortamın serbest bırakılmasıdır.
-
-**Bu aşamanın sonucu:** Sistem, initramfs içerisindeki geçici ortamdan çıkarak gerçek Linux kök dosya sistemi üzerinde çalışmaya başlar.
-
-## 7. İnit Sisteminin Devralması (PID 1)
-
-Gerçek kök dosya sistemine geçiş tamamlandığında işletim sisteminin ana init sistemi çalışmaya başlar.
-
-Linux sistemlerde kullanıcı alanında (userspace) başlatılan ilk süreç PID 1 numarasını alır. Bu süreç, sistemin geri kalanının başlatılmasından ve süreçlerin yönetilmesinden sorumludur.
-
-Linux sistemlerde PID 1 görevini üstlenebilen başlıca init sistemleri şunlardır:
-
-- **systemd:** Modern Linux dağıtımlarında yaygın olarak kullanılan, servisleri ve sistem kaynaklarını yöneten init sistemidir.
-- **OpenRC:** Özellikle Gentoo ve Alpine Linux gibi dağıtımlarda kullanılan servis yönetim sistemidir.
-- **SysVinit:** Geleneksel Unix/Linux başlangıç yaklaşımını kullanan init sistemidir.
-- **runit:** Basitlik ve servislerin sürekli çalışır durumda tutulması üzerine tasarlanmış init sistemidir.
-
-### systemd ile başlangıç süreci
-
-systemd, sistem açılışını hedefler (targets), birimler (units) ve bağımlılıklar üzerinden yönetir.
-
-Önyükleme sırasında sistemin ihtiyaç duyduğu temel birimler başlatılır. Bu birimler arasında:
-
-- `local-fs.target`: Yerel dosya sistemlerinin bağlanması.
-- `swap.target`: Takas alanlarının etkinleştirilmesi.
-- `basic.target`: Temel sistem servislerinin hazırlanması.
-- `network.target`: Ağ altyapısının başlangıç aşamasının tamamlanması.
-- `multi-user.target`: Çok kullanıcılı, metin tabanlı çalışma ortamının hazırlanması.
-- `graphical.target`: Grafiksel kullanıcı ortamının başlatılması.
-
-Bu hedefler ve birimler arasındaki bağımlılıklar, hangi işlemin önce veya hangi işlemlerle eş zamanlı gerçekleştirileceğini belirler.
-
-Örneğin ağ servisi, günlükleme servisi ve donanım yönetim servisleri uygun bağımlılıklar sağlandığında paralel olarak başlatılabilir.
-
-### OpenRC ile başlangıç süreci
-
-OpenRC, servisleri ve servis gruplarını (runlevels) kullanarak sistem başlangıcını yönetir.
-
-Örneğin:
-
-```bash
-rc-status
-```
-
-Komutuyla mevcut servislerin ve çalışma seviyesinin durumu görüntülenebilir.
-
-Bir servisi başlangıçta etkinleştirmek için:
-
-```bash
-rc-update add sshd default
-```
-
-Bu komut, SSH servisini varsayılan çalışma seviyesine ekler.
-
-### Servislerin başlatılması
-
-Init sistemi, yapılandırmasına göre aşağıdaki servisleri ve bileşenleri devreye alabilir:
-
-- Sistem günlükleme servisleri.
-- Ağ bağlantısı ve ağ yönetim servisleri.
-- Donanım aygıtlarının yönetimi.
-- Zaman eşitleme servisleri.
-- SSH ve diğer uzak erişim servisleri.
-- Ses altyapısı.
-- Sistem güvenliği ve erişim denetimi bileşenleri.
-
-Burada önemli olan, bütün servislerin tek tek ve kesin bir sırayla başlatılmadığıdır. Özellikle systemd gibi modern init sistemleri, servis bağımlılıklarını dikkate alarak uygun işlemleri paralel yürütebilir.
-
-**Bu aşamanın sonucu:** Sistem servisleri başlatılır, gerekli çalışma ortamı hazırlanır ve kullanıcı oturumunun açılabilmesi için gerekli altyapı oluşturulur.
-
-## 8. Kullanıcı Ekranı (GUI/TUI)
-
-İnit sisteminin gerekli servisleri başlatmasının ardından sistem, yapılandırılmış çalışma seviyesine veya hedefine göre kullanıcı giriş ekranını hazırlar.
-
-Linux sistemlerde kullanıcı etkileşimi temel olarak iki farklı şekilde gerçekleştirilebilir:
-
-### TUI (Text User Interface)
-
-Metin tabanlı kullanıcı arayüzüdür. Grafiksel masaüstü ortamı bulunmayan veya kullanılmayan sistemlerde kullanıcı, terminal üzerinden oturum açar.
-
-Bu işlem genellikle `getty` ve `login` programları aracılığıyla gerçekleştirilir.
-
-- `getty`: Sanal terminali hazırlar ve kullanıcı girişini bekler.
-- `login`: Kullanıcının kimlik bilgilerini doğrular ve oturum açma işlemini gerçekleştirir.
-- `shell`: Kullanıcı oturumu açıldıktan sonra komutların çalıştırılmasını sağlayan kabuk ortamını başlatır.
-
-Örneğin Bash kabuğu kullanıldığında kullanıcı komut satırı üzerinden sistemle etkileşim kurabilir.
-
-### GUI (Graphical User Interface)
-
-Grafiksel kullanıcı arayüzüdür. Masaüstü ortamı kullanılacaksa init sistemi, yapılandırılmış görüntü yöneticisini (Display Manager) başlatır.
-
-Yaygın görüntü yöneticileri şunlardır:
-
-- **GDM:** GNOME masaüstü ortamında kullanılan görüntü yöneticisi.
-- **SDDM:** KDE Plasma ile yaygın olarak kullanılan görüntü yöneticisi.
-- **LightDM:** Farklı masaüstü ortamlarıyla kullanılabilen görüntü yöneticisi.
-
-Görüntü yöneticisi, kullanıcıya grafiksel giriş ekranını sunar. Kullanıcı adı ve parola doğrulandıktan sonra ilgili masaüstü oturumu başlatılır.
-
-Grafiksel oturumun hazırlanmasında ayrıca şu bileşenler görev alabilir:
-
-- Grafik sunucusu veya görüntü protokolü altyapısı (Xorg / Wayland).
-- Pencere yöneticisi veya masaüstü ortamı.
-- Görüntü ve giriş aygıtı sürücüleri.
-- Kullanıcı oturumuna ait başlangıç servisleri.
-
-Kullanıcı başarılı şekilde oturum açtıktan sonra masaüstü veya terminal ortamı kullanıma hazır hâle gelir.
-
-Bu noktada bilgisayarın önyükleme süreci tamamlanmış ve işletim sistemi normal çalışma durumuna geçmiş olur.
-
-## 9. Linux Önyükleme Sürecinin Genel Akış Şeması
-
-Linux önyükleme sürecinin genel akışı aşağıdaki şekilde özetlenebilir:
-
-1. **POST ve donanım kontrolü:** CPU, RAM ve temel donanım hazırlığı.
-2. **BIOS / UEFI:** Önyükleme aygıtının ve girdisinin belirlenmesi.
-3. **Bootloader:** Kernel, initramfs ve kernel parametrelerinin yüklenmesi.
-4. **Linux Kernel:** Çekirdek altyapısının başlatılması.
-5. **initramfs:** Depolama, şifreleme ve gerçek kök dosya sistemine erişim.
-6. **Root Switch:** Geçici kökten gerçek kök dosya sistemine geçiş.
-7. **Init System (PID 1):** Servislerin ve sistem hedeflerinin başlatılması.
-8. **Kullanıcı arayüzü:** TUI veya GUI üzerinden oturum açılması.
-
-## 10. Konuyla İlgili Yararlı Linux Komutları
-
-Önyükleme sürecini daha iyi anlamak ve sistem üzerinde inceleme yapmak için aşağıdaki komutlardan yararlanılabilir.
-
-| Komut | Açıklama |
+| Bileşen | Görevi |
 |---|---|
-| `systemd-analyze` | Sistem açılış süresini gösterir. |
-| `systemd-analyze blame` | Servislerin başlangıç sürelerini listeler. |
-| `systemd-analyze critical-chain` | Kritik başlangıç bağımlılık zincirini gösterir. |
-| `journalctl -b` | Mevcut açılışa ait günlükleri gösterir. |
-| `dmesg` | Çekirdek mesajlarını görüntüler. |
-| `lsblk -f` | Diskleri, bölümleri ve dosya sistemlerini listeler. |
-| `findmnt /` | Gerçek kök dosya sisteminin bağlama bilgisini gösterir. |
-| `cat /proc/cmdline` | Çekirdeğe iletilen başlangıç parametrelerini gösterir. |
-| `ps -p 1 -f` | PID 1 sürecini ve çalıştırılan programı gösterir. |
+| Boot Sector | Önyükleyiciyle iletişim ve başlangıç bilgilerini içerir. |
+| Setup Code | Önyükleme parametrelerini işler ve mimariye özgü başlangıç hazırlıklarını gerçekleştirir. |
+| Decompressor | Sıkıştırılmış çekirdek gövdesini açar. |
+| Compressed Kernel | İşletim sisteminin ana çekirdek kodunu içerir. |
+| Boot Header | Önyükleyiciye gerekli çekirdek bilgilerini ve desteklenen özellikleri bildirir. |
 
-**Not:** `systemd-analyze` komutları systemd kullanılan sistemlerde kullanılabilir. Diğer init sistemlerinde farklı araçlar tercih edilmelidir.
+Genel görünüm:
+
+```text
+vmlinuz (bzImage)
+│
+├── Boot Header
+│   └── Önyükleme bilgileri
+│
+├── Setup Code
+│   └── Başlangıç hazırlıkları
+│
+├── Decompressor
+│   └── Sıkıştırılmış imajı açar
+│
+└── Compressed Kernel
+    └── Linux çekirdeğinin ana kodu
+```
+
+### Çekirdek Sıkıştırma Algoritmaları
+
+Linux çekirdeği farklı sıkıştırma algoritmaları kullanılarak derlenebilir.
+
+Yaygın algoritmalar:
+
+| Algoritma | Özellik |
+|---|---|
+| Gzip | Yaygın ve geniş uyumluluğa sahip sıkıştırma algoritması. |
+| XZ | Yüksek sıkıştırma oranı sunar. |
+| LZ4 | Hızlı sıkıştırma ve açma performansıyla bilinir. |
+| Zstandard (Zstd) | Sıkıştırma oranı ve performans arasında denge sunar. |
+| LZO | Hızlı açma performansı sunan algoritmalardan biridir. |
+
+Kullanılabilecek algoritmalar, çekirdeğin derleme sırasında etkinleştirilen yapılandırma seçeneklerine bağlıdır.
+
+**Önemli:** Çekirdek imajının açılması ile initramfs imajının açılması iki farklı işlemdir. Çekirdek imajını kendi decompressor kodu açarken initramfs, çekirdek tarafından ayrıca açılarak başlangıç dosya sistemi hâline getirilir.
+
+### vmlinux ve vmlinuz Arasındaki Fark
+
+| Özellik | vmlinux | vmlinuz |
+|---|---|---|
+| Yapı | Genellikle ELF biçiminde | Önyükleme imajı |
+| Sıkıştırma | Genellikle sıkıştırılmamış | Genellikle sıkıştırılmış |
+| Kullanım | Geliştirme, hata ayıklama ve analiz | Sistem önyüklemesi |
+| Decompressor | Genellikle bulunmaz | Kendi açılış mekanizmasını içerir |
+| Dağıtımlardaki konum | Derleme kaynaklarında veya debug paketlerinde | Genellikle /boot altında |
+
+vmlinux ve vmlinuz birbirleriyle ilişkili olsa da doğrudan aynı dosyanın farklı isimleri olarak değerlendirilmemelidir. Önyükleme imajı oluşturulurken mimariye özgü ek kodlar ve yapılandırmalar da kullanılır.
+
+## 2. İşlemci Modları ve Kernel Başlangıcı
+
+Linux çekirdeğinin başlangıç sürecini anlayabilmek için işlemcinin çalışma modlarını bilmek gerekir.
+
+x86 mimarisinde işlemci, farklı bellek erişim ve çalışma yetenekleri sunan çeşitli modlarda çalışabilir.
+
+Bu modların en önemlileri şunlardır:
+
+- Real Mode (Gerçek Mod)
+- Protected Mode (Korumalı Mod)
+- Long Mode (64-bit Mod)
+
+### 2.1. Real Mode (Gerçek Mod)
+
+Real Mode, x86 işlemcilerin geleneksel başlangıç çalışma modudur.
+
+İşlemcinin sıfırlanmasının ardından x86 mimarisinde başlangıç durumu bu mod üzerinden tanımlanır.
+
+Temel özellikleri:
+
+- 16-bit çalışma ortamı sunar.
+- Geleneksel adresleme yapısında 1 MB bellek alanına erişebilir.
+- Bellek koruması ve modern sanal bellek mekanizmaları bulunmaz.
+- Eski BIOS yazılımlarıyla uyumluluk sağlar.
+
+BIOS üzerinden başlatılan geleneksel x86 önyükleme sürecinde çekirdeğin başlangıç kodu Real Mode ortamında çalıştırılır.
+
+Bu aşamada önyükleyiciden gelen başlangıç parametreleri ve sistem bilgileri işlenir.
+
+### 2.2. Protected Mode (Korumalı Mod)
+
+Protected Mode, x86 işlemcilerin daha gelişmiş bellek yönetimi ve koruma mekanizmalarını kullanmasını sağlar.
+
+Temel özellikleri:
+
+- 32-bit adresleme ve işlem yetenekleri sunar.
+- Bellek segmentasyonu ve koruma mekanizmaları sağlar.
+- GDT (Global Descriptor Table) kullanır.
+- İşlemci istisnaları ve kesmeler için gerekli altyapıyı destekler.
+- Sanal bellek yönetimi için gerekli mekanizmaların kullanılmasına imkân tanır.
+
+Bu modda işlemci, sistem belleğini daha kontrollü bir şekilde yönetebilir.
+
+### 2.3. Long Mode (64-bit Mod)
+
+Long Mode, x86-64 mimarisinde kullanılan 64-bit çalışma ortamıdır.
+
+Modern 64-bit Linux çekirdeklerinin çalışabilmesi için işlemcinin bu moda geçmesi gerekir.
+
+Temel özellikleri:
+
+- 64-bit işlem ve adresleme desteği sağlar.
+- Genişletilmiş işlemci yazmaçlarını kullanır.
+- 64-bit sanal adresleme mekanizmalarını destekler.
+- Modern bellek yönetimi ve sayfalama mekanizmalarını kullanır.
+
+Long Mode'a geçiş sırasında işlemcinin gerekli özellikleri desteklemesi, sayfalama mekanizmalarının hazırlanması ve ilgili kontrol yazmaçlarının yapılandırılması gerekir.
+
+### İşlemci Modlarının Genel Akışı
+
+Geleneksel BIOS tabanlı x86-64 önyüklemesinde genel olarak aşağıdaki geçişler gerçekleşebilir:
+
+```text
+       BIOS / Bootloader
+              |
+              v
+        REAL MODE
+           16-bit
+              |
+              v
+      PROTECTED MODE
+           32-bit
+              |
+              v
+        LONG MODE
+           64-bit
+              |
+              v
+       Kernel Başlangıcı
+```
+
+**Önemli:** Bu şema geleneksel x86 BIOS başlangıç yolunu basitleştirerek gösterir. UEFI üzerinden başlatılan x86-64 sistemlerde firmware, EFI uygulamalarını zaten 64-bit Long Mode ortamında çalıştırabilir. Dolayısıyla her Linux önyüklemesinde işlemcinin mutlaka 16-bit Real Mode'dan başlayıp 32-bit Protected Mode üzerinden 64-bit Long Mode'a geçtiğini söylemek doğru değildir.
+
+UEFI ve BIOS başlangıç yolları, Linux çekirdeğinin mimariye özgü başlangıç kodlarında farklılık gösterir.
+
+## 3. Çekirdeğin Sıkıştırmasının Açılması (Decompression)
+
+Önyükleyici tarafından belleğe yüklenen çekirdek imajı, doğrudan normal çekirdek çalışma ortamına geçmeden önce kendi başlangıç kodlarını çalıştırır.
+
+Bu başlangıç kodları, mimariye ve önyükleme yöntemine bağlı olarak gerekli hazırlıkları gerçekleştirir.
+
+Özellikle x86-64 sistemlerde decompressor kodunun görevleri şunlardır:
+
+1. Önyükleyiciden gelen başlangıç bilgilerini değerlendirmek.
+2. Gerekli işlemci özelliklerini kontrol etmek.
+3. Bellek alanlarını ve çekirdeğin yerleşimini hazırlamak.
+4. Sıkıştırılmış çekirdek gövdesini açmak.
+5. Açılan çekirdeği uygun bellek alanına yerleştirmek.
+6. Kontrolü çekirdeğin mimariye özgü başlangıç koduna devretmek.
+
+Sıkıştırılmış çekirdeğin açılması sırasında mevcut bellek haritasının dikkate alınması gerekir. Çekirdek imajının kendi üzerine yazılmasını veya BIOS, firmware ve diğer sistem bileşenleri için ayrılmış bellek alanlarının bozulmasını önlemek önemlidir.
+
+Bu nedenle çekirdek, kendisini bellekte uygun bir konuma yerleştirmek için gerekli düzenlemeleri gerçekleştirir.
+
+### Decompression Sonrası Başlangıç
+
+Çekirdek gövdesi açıldıktan sonra mimariye özgü başlangıç kodları çalıştırılır.
+
+x86-64 mimarisinde bu aşamada aşağıdaki dosya ve bileşenler önemlidir:
+
+| Dosya / Bileşen | Görevi |
+|---|---|
+| arch/x86/boot/ | x86 önyükleme hazırlık kodları |
+| arch/x86/boot/compressed/ | Çekirdek açma ve yerleştirme kodları |
+| arch/x86/kernel/head_64.S | 64-bit mimariye özgü erken başlangıç kodu |
+| init/main.c | Mimari bağımsız çekirdek başlangıç fonksiyonları |
+
+Bu aşamaların ardından çekirdek, mimariye özgü başlangıç işlemlerini tamamlayarak C dilinde yazılmış ana başlangıç fonksiyonuna ulaşır.
+
+Bu fonksiyon:
+
+```c
+start_kernel()
+```
+
+olarak adlandırılır.
+
+## 4. start_kernel() ve Çekirdek Alt Sistemlerinin İlklendirilmesi
+
+Linux çekirdeğinin ana başlangıç fonksiyonu olan `start_kernel()`, çekirdeğin temel çalışma altyapısının hazırlanmasından sorumludur.
+
+Kaynak kod içerisinde:
+
+```text
+init/main.c
+```
+
+dosyasında bulunur.
+
+Bu fonksiyon çalıştığında henüz normal kullanıcı uygulamaları veya grafiksel masaüstü ortamı başlatılmamıştır.
+
+Çekirdek, kendi temel altyapısını hazırlayarak sistemin süreçleri ve donanımı yönetebileceği duruma gelmesini sağlar.
+
+Bu aşamada gerçekleştirilen önemli işlemler şunlardır:
+
+### 4.1. Mimariye Özgü Hazırlıklar
+
+Çekirdek ilk olarak işlemci mimarisine özgü başlangıç işlemlerini gerçekleştirir.
+
+Bu görevlerde `setup_arch()` fonksiyonu önemli rol oynar.
+
+Örneğin:
+
+- Fiziksel bellek haritasının değerlendirilmesi.
+- İşlemci ve platform bilgilerinin hazırlanması.
+- Firmware tarafından sağlanan bilgilerin işlenmesi.
+- Mimariye özgü başlangıç parametrelerinin değerlendirilmesi.
+- Kullanılabilir ve ayrılmış bellek alanlarının belirlenmesi.
+
+### 4.2. Bellek Yönetiminin Başlatılması
+
+Çekirdek, fiziksel ve sanal belleği yönetebilmek için gerekli altyapıyı oluşturur.
+
+Bu kapsamda:
+
+- Fiziksel bellek sayfaları yönetilebilir hâle getirilir.
+- Bellek ayırma mekanizmaları hazırlanır.
+- Sanal bellek yönetimi için gerekli yapılar oluşturulur.
+- Bellek bölgeleri ve NUMA gibi platform özellikleri değerlendirilir.
+- Kernel alanı ve kullanıcı alanı arasındaki bellek koruması hazırlanır.
+
+Linux çekirdeğinin bellek yönetimi altyapısı, sistemdeki süreçlerin birbirlerinin bellek alanlarına kontrolsüz şekilde erişmesini engelleyen önemli mekanizmalar içerir.
+
+### 4.3. Süreç Zamanlayıcısının Başlatılması
+
+Linux, aynı anda birçok programın çalışmasını sağlayabilmek için işlemci zamanını süreçler arasında paylaştırır.
+
+Bu işlemi Scheduler (Zamanlayıcı) gerçekleştirir.
+
+Çekirdeğin başlangıç aşamasında:
+
+```c
+sched_init()
+```
+
+fonksiyonu aracılığıyla zamanlayıcı altyapısının gerekli başlangıç yapıları hazırlanır.
+
+Zamanlayıcının temel görevleri:
+
+- Çalıştırılmaya hazır süreçleri yönetmek.
+- İşlemci zamanını süreçler arasında paylaştırmak.
+- Öncelik ve zamanlama politikalarını uygulamak.
+- Çok çekirdekli işlemcilerde süreçleri uygun işlemcilere dağıtmak.
+
+### 4.4. Kesme ve İstisna Yönetimi
+
+İşlemci, normal komut yürütme akışının dışında bazı olaylara tepki vermek zorundadır.
+
+Örneğin:
+
+- Klavyeden bir tuşa basılması.
+- Ağ kartına yeni bir veri paketinin ulaşması.
+- Disk okuma işleminin tamamlanması.
+- İşlemci üzerinde bir hata oluşması.
+
+Bu olayların yönetilmesinde Interrupt (Kesme) ve Exception (İstisna) mekanizmaları kullanılır.
+
+Çekirdek başlangıcında GDT, IDT ve kesme altyapısı gibi yapılar hazırlanır.
+
+Önemli bileşenler:
+
+- **GDT (Global Descriptor Table):** x86 mimarisinde segment tanımlamalarını ve işlemci çalışma ortamına ilişkin bilgileri tutar.
+- **IDT (Interrupt Descriptor Table):** İşlemci kesmelerinin ve istisnalarının hangi işleyiciler tarafından karşılanacağını belirler.
+- **IRQ (Interrupt Request):** Donanım aygıtlarından gelen kesme isteklerini ifade eder.
+
+### 4.5. Sanal Dosya Sistemi (VFS)
+
+Linux, farklı dosya sistemlerine ortak bir arayüz üzerinden erişebilmek için VFS (Virtual File System) kullanır.
+
+Örneğin sistemde:
+
+- ext4
+- XFS
+- Btrfs
+- FAT32
+- NTFS
+
+gibi farklı dosya sistemleri bulunabilir.
+
+VFS, uygulamaların ve çekirdeğin bu dosya sistemlerine ortak bir arayüz üzerinden erişmesini sağlar.
+
+Çekirdek başlangıcında VFS altyapısının gerekli veri yapıları ve önbellekleri hazırlanır.
+
+### Önemli Başlangıç Fonksiyonları
+
+Aşağıdaki tabloda çekirdek başlangıcında karşılaşılan bazı önemli fonksiyon ve bileşenler özetlenmiştir.
+
+| Fonksiyon / Bileşen | Görevi |
+|---|---|
+| setup_arch() | Mimariye özgü donanım ve bellek hazırlıklarını gerçekleştirir. |
+| mm_core_init() | Bellek yönetiminin temel altyapısını başlatır. |
+| sched_init() | Süreç zamanlayıcı altyapısını hazırlar. |
+| trap_init() | İşlemci istisna ve trap mekanizmalarını hazırlar. |
+| init_IRQ() | Donanım kesme altyapısının başlatılmasında görev alır. |
+| vfs_caches_init() | VFS önbelleklerini ve gerekli veri yapılarını oluşturur. |
+| rest_init() | İlk kernel thread'lerinin oluşturulmasını ve başlangıç sürecinin devamını sağlar. |
+
+**Not:** Bu tablo başlangıç sürecindeki önemli bileşenleri temsil eder. Gerçek çağrı sırası ve fonksiyonların görev dağılımı çekirdek sürümüne ve işlemci mimarisine göre değişebilir. Bazı hazırlıklar doğrudan bu fonksiyonların içinde, bazıları ise mimariye özgü kodlarda gerçekleştirilir.
+
+## 5. Çekirdek Parametreleri (Kernel Command Line)
+
+Önyükleyici, Linux çekirdeğine başlangıç sırasında kullanacağı parametreleri iletir.
+
+Bu parametreler Kernel Command Line olarak adlandırılır.
+
+Çekirdek parametreleri, sistemin hangi diskten başlatılacağını, hangi sürücülerin kullanılacağını, hata ayıklama seviyesini ve çeşitli donanım özelliklerinin nasıl çalışacağını belirleyebilir.
+
+Örneğin GRUB yapılandırmasında:
+
+```bash
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+```
+
+şeklinde tanımlanan parametreler çekirdeğe iletilebilir.
+
+Çalışan Linux sistemde kullanılan parametreleri görmek için:
+
+```bash
+cat /proc/cmdline
+```
+
+komutu kullanılabilir.
+
+### Yaygın Kernel Parametreleri
+
+| Parametre | Açıklama |
+|---|---|
+| root=UUID=... | Gerçek kök dosya sisteminin konumunu belirtir. |
+| ro | Kök dosya sisteminin başlangıçta salt okunur bağlanmasını ister. |
+| rw | Kök dosya sisteminin okunabilir ve yazılabilir bağlanmasını ister. |
+| quiet | Çekirdeğin konsola yazdırdığı mesajları azaltır. |
+| loglevel=3 | Konsola yazdırılan çekirdek mesajlarının seviyesini sınırlar. |
+| init=/path | Varsayılan init programının yerine belirtilen programı başlatır. |
+| systemd.unit=... | systemd'nin başlatacağı hedefi veya birimi belirler. |
+| nomodeset | Çekirdeğin başlangıçta grafik mod ayarlaması yapmasını sınırlar. |
+| panic=10 | Kernel panic durumunda belirtilen süre sonunda yeniden başlatmayı sağlar. |
+
+**Önemli:** Bütün parametreler doğrudan Linux çekirdeği tarafından işlenmez. Bazıları initramfs içerisindeki araçlar veya sonrasında başlatılan init sistemi tarafından değerlendirilir.
+
+Örneğin `splash` parametresi, genellikle Plymouth gibi grafiksel açılış ekranı bileşenleri tarafından değerlendirilir. Genel amaçlı bir Linux çekirdek parametresi değildir.
+
+Benzer şekilde `systemd.unit=` parametresi systemd tarafından işlenir.
+
+### init= Parametresi
+
+`init=` parametresi, çekirdeğin başlatacağı ilk kullanıcı alanı programını belirlemek için kullanılır.
+
+Örneğin:
+
+```text
+init=/bin/bash
+```
+
+Bu parametreyle sistemin normal init programı yerine Bash başlatılabilir.
+
+Bu yöntem bazı kurtarma ve hata ayıklama senaryolarında kullanılabilir. Ancak gerçek kök dosya sisteminin erişilebilir olması ve gerekli dosyaların bulunması gerekir.
+
+Bu işlem, normal bir kullanıcı oturumu başlatmaz ve sistem servislerini otomatik olarak çalıştırmaz.
+
+## 6. PID 0 ve PID 1
+
+Linux süreç yönetimini anlayabilmek için PID kavramını bilmek gerekir.
+
+PID (Process ID), sistemde çalışan her sürece verilen benzersiz işlem numarasıdır.
+
+Linux sistemlerde süreçlerin oluşturulması ve yönetilmesi çekirdeğin görevlerinden biridir.
+
+Önyükleme sırasında özel öneme sahip iki süreç bulunur:
+
+- PID 0: Idle Task (Boşta Bekleme Süreci).
+- PID 1: İlk kullanıcı alanı süreci (Init).
+
+### 6.1. PID 0 (Idle Process)
+
+Linux çekirdeğinin başlangıç görev yapısı PID 0 olarak bilinir.
+
+Bu görev geleneksel olarak swapper veya idle task olarak adlandırılır.
+
+PID 0'ın temel görevi, işlemcinin çalıştırılacak başka bir görevi bulunmadığında boşta kalma işlemlerini yürütmektir.
+
+Modern sistemlerde işlemcinin boşta kaldığı durumlarda uygun güç tasarrufu mekanizmaları kullanılabilir.
+
+Örneğin işlemci, ACPI ve işlemci mimarisinin sunduğu mekanizmalar aracılığıyla düşük güç tüketimli bekleme durumlarına geçebilir.
+
+Önemli bir ayrıntı: PID 0, normal kullanıcı süreçleri gibi oluşturulan standart bir süreç değildir. Çekirdeğin başlangıçtan itibaren yönettiği özel bir görev yapısıdır.
+
+### 6.2. PID 1 (İlk Kullanıcı Alanı Süreci)
+
+Çekirdeğin başlangıç işlemleri tamamlandığında kullanıcı alanının başlatılması gerekir.
+
+Bu aşamada `rest_init()` fonksiyonu devreye girer.
+
+Bu fonksiyon, çekirdek başlangıcında iki önemli kernel thread oluşturur:
+
+- `kernel_init`
+- `kthreadd`
+
+Başlangıçta oluşturulan `kernel_init` görevi PID 1 numarasını alır.
+
+Daha sonra çekirdek başlangıç işlemlerini tamamlayarak ilk kullanıcı alanı programını çalıştırmaya hazırlanır.
+
+Bu noktada initramfs kullanılıyorsa ilk çalıştırılan program genellikle initramfs içerisindeki:
+
+```text
+/init
+```
+
+programıdır.
+
+Initramfs kullanılmayan veya farklı başlangıç yapılandırmalarında çekirdek doğrudan gerçek kök dosya sistemindeki init programını başlatabilir.
+
+Başlatılacak init programı için yaygın konumlar şunlardır:
+
+```text
+/sbin/init
+/usr/lib/systemd/systemd
+/bin/init
+```
+
+Bu dosyalar kullanılan dağıtıma ve init sistemine göre değişir.
+
+Örneğin systemd kullanılan bir dağıtımda PID 1 görevi systemd tarafından üstlenilir.
+
+Bunu çalışan sistemde kontrol etmek için:
+
+```bash
+ps -p 1 -o pid,ppid,comm,args
+```
+
+komutu kullanılabilir.
+
+Örnek çıktı:
+
+```text
+PID  PPID  COMMAND  COMMAND
+1    0     systemd  /sbin/init
+```
+
+### PID 0 ve PID 1 Arasındaki Fark
+
+| Özellik | PID 0 | PID 1 |
+|---|---|---|
+| Adı | Idle / Swapper | Init |
+| Görevi | İşlemci boşta kaldığında bekleme işlemlerini yürütmek | Kullanıcı alanını başlatmak ve sistemin süreçlerini yönetmek |
+| Türü | Özel çekirdek görevi | İlk kullanıcı alanı süreci |
+| Kullanıcı alanında mı? | Hayır | Evet |
+| Örnek | Idle Task | systemd, OpenRC veya SysVinit |
+
+### PID 1 ve Kthreadd İlişkisi
+
+Linux çekirdeği, donanım ve sistem işlemlerini gerçekleştirmek için bazı özel kernel thread'ler oluşturur.
+
+Bu thread'ler kullanıcı alanında çalışan normal programlardan farklıdır.
+
+Örneğin:
+
+- `kthreadd`: Çekirdek thread'lerinin oluşturulmasını yönetir.
+- `kworker`: Çekirdeğin workqueue altyapısında arka plan görevlerini yürütür.
+- `kswapd`: Bellek yönetiminde sayfa geri kazanımı işlemlerine yardımcı olur.
+
+Bu süreçlerin çoğu kullanıcı alanından bağımsız olarak çekirdek içerisinde çalışır.
+
+## 7. Kernel ve User Space (Kullanıcı Alanı)
+
+Linux işletim sisteminde bellek ve işlemci yetkileri açısından iki temel çalışma alanı bulunur:
+
+- Kernel Space (Çekirdek Alanı)
+- User Space (Kullanıcı Alanı)
+
+Bu ayrım, sistemin güvenli ve kararlı çalışabilmesi için önemlidir.
+
+### Kernel Space
+
+Kernel Space, Linux çekirdeğinin ve çekirdek modüllerinin çalıştığı ayrıcalıklı çalışma alanıdır.
+
+Bu alanda çalışan kodlar donanım ve sistem kaynaklarına doğrudan erişebilecek yetkilere sahiptir.
+
+Örneğin:
+
+- Bellek yönetimi.
+- İşlemci zamanlayıcısı.
+- Dosya sistemi sürücüleri.
+- Ağ altyapısı.
+- Donanım sürücüleri.
+
+### User Space
+
+User Space, kullanıcı uygulamalarının ve sistem servislerinin çalıştığı alandır.
+
+Bu alandaki programlar donanım kaynaklarına doğrudan erişmek yerine çekirdeğin sunduğu sistem çağrıları (System Calls) üzerinden işlem gerçekleştirir.
+
+Örneğin:
+
+- Bash
+- systemd
+- SSH
+- Web sunucuları
+- Masaüstü uygulamaları
+- Kullanıcı programları
+
+### Kernel Space ve User Space Karşılaştırması
+
+| Özellik | Kernel Space | User Space |
+|---|---|---|
+| Çalışma yetkisi | Ayrıcalıklı | Sınırlı |
+| Donanıma erişim | Çekirdek mekanizmaları üzerinden doğrudan yönetim | Sistem çağrıları üzerinden |
+| Bellek alanı | Çekirdek belleği | Süreçlere ait kullanıcı belleği |
+| Çalışan bileşenler | Kernel, kernel modülleri | Uygulamalar ve servisler |
+| Hata etkisi | Sistem kararlılığını ciddi şekilde etkileyebilir | Genellikle ilgili süreçle sınırlıdır |
+
+İki alan arasındaki iletişim System Call (Sistem Çağrısı) mekanizmasıyla sağlanır.
+
+Örneğin bir uygulama dosya okumak istediğinde:
+
+1. Uygulama `read()` sistem çağrısını gerçekleştirir.
+2. İşlemci gerekli geçişi yaparak çekirdek alanına geçer.
+3. Kernel, ilgili dosya tanımlayıcısını ve erişim izinlerini kontrol eder.
+4. Dosya sisteminden gerekli veriler alınır.
+5. Sonuç kullanıcı alanındaki uygulamaya döndürülür.
+
+Bu mekanizma sayesinde kullanıcı uygulamaları donanımın yönetim ayrıntılarını bilmek zorunda kalmadan sistem kaynaklarını kullanabilir.
+
+## 8. Kernel Hata Ayıklama ve Sistem İnceleme
+
+Linux çekirdeği, başlangıç sırasında gerçekleştirdiği işlemlere ilişkin çeşitli mesajlar üretir.
+
+Bu mesajlar, donanımın algılanması, sürücülerin yüklenmesi, bellek yönetimi ve diğer çekirdek işlemlerinin incelenmesi için kullanılabilir.
+
+### 8.1. dmesg
+
+`dmesg`, çekirdek tarafından üretilen mesajların halka arabelleğinden (ring buffer) okunmasını sağlar.
+
+Temel kullanım:
+
+```bash
+dmesg
+```
+
+Çıktıyı sayfalı görüntülemek için:
+
+```bash
+dmesg | less
+```
+
+Donanım ve bellek mesajlarını filtrelemek için:
+
+```bash
+dmesg | grep -i -E 'memory|cpu|acpi'
+```
+
+Hata mesajlarını görüntülemek için:
+
+```bash
+dmesg --level=err,warn
+```
+
+Çekirdek mesajlarının zaman bilgileriyle görüntülenmesi için:
+
+```bash
+dmesg -T
+```
+
+Not: `dmesg -T` tarafından gösterilen zamanlar yaklaşık takvim zamanlarıdır. Özellikle sistemin çok erken açılış aşamalarında zaman eşitlemesi henüz gerçekleşmemiş olabilir.
+
+### 8.2. /proc/cpuinfo
+
+Çekirdeğin işlemci hakkında topladığı bilgileri görüntüler.
+
+```bash
+cat /proc/cpuinfo
+```
+
+Bu dosyada:
+
+- İşlemci modeli.
+- İşlemci ailesi.
+- Çekirdek sayısı.
+- İşlemci özellikleri.
+- Desteklenen komut setleri.
+
+gibi bilgiler bulunabilir.
+
+### 8.3. /proc/meminfo
+
+Bellek yönetimiyle ilgili bilgileri gösterir.
+
+```bash
+cat /proc/meminfo
+```
+
+Önemli alanlardan bazıları:
+
+| Alan | Açıklama |
+|---|---|
+| MemTotal | Kullanılabilir toplam fiziksel bellek |
+| MemFree | Tamamen boş fiziksel bellek |
+| MemAvailable | Yeni uygulamalar için tahmini kullanılabilir bellek |
+| Buffers | Blok aygıtı tampon belleği |
+| Cached | Dosya önbelleği için kullanılan bellek |
+| SwapTotal | Toplam takas alanı |
+| SwapFree | Boş takas alanı |
+
+### 8.4. /proc/cmdline
+
+Çekirdeğe önyükleyici tarafından iletilen başlangıç parametrelerini görüntüler.
+
+```bash
+cat /proc/cmdline
+```
+
+### 8.5. journalctl
+
+systemd kullanılan dağıtımlarda çekirdek mesajları sistem günlükleri üzerinden de incelenebilir.
+
+Mevcut açılışın çekirdek mesajları:
+
+```bash
+journalctl -k -b
+```
+
+Önceki açılışın çekirdek mesajları:
+
+```bash
+journalctl -k -b -1
+```
+
+### 8.6. lsmod ve modinfo
+
+Çekirdeğe yüklenmiş modülleri görüntülemek için:
+
+```bash
+lsmod
+```
+
+Bir modül hakkında ayrıntılı bilgi almak için:
+
+```bash
+modinfo e1000e
+```
+
+Buradaki `e1000e`, Intel Ethernet denetleyicilerinde kullanılan sürücülerden biridir. Sisteminizde farklı bir sürücü bulunabilir.
+
+## 9. Linux Kernel Başlangıç Sürecinin Genel Akış Şeması
+
+Şimdiye kadar incelediğimiz işlemleri bir araya getirdiğimizde çekirdeğin başlangıç süreci genel olarak şu şekilde ilerler:
+
+```text
+        BOOTLOADER
+             |
+             v
+   Kernel (vmlinuz) belleğe yüklenir
+             |
+             v
+       Boot Protocol
+             |
+             v
+   Mimariye özgü başlangıç kodu
+             |
+             v
+     Decompressor çalışır
+             |
+             v
+   Sıkıştırılmış kernel açılır
+             |
+             v
+   Mimariye özgü kernel kodu
+             |
+             v
+       start_kernel()
+             |
+             v
+    Temel alt sistemler hazırlanır
+             |
+             v
+      Scheduler / Memory
+       IRQ / VFS / vb.
+             |
+             v
+         rest_init()
+             |
+             v
+     İlk kernel thread'leri
+       /              \
+      v                v
+  PID 1             kthreadd
+      |
+      v
+  kernel_init
+      |
+      v
+  Initramfs varsa /init
+      |
+      v
+  Gerçek root filesystem
+      |
+      v
+  Gerçek init programı
+      |
+      v
+  systemd / OpenRC / SysVinit
+      |
+      v
+  Sistem servisleri
+      |
+      v
+  Kullanıcı oturumu
+```
+
+**Not:** Bu akış şeması genel bir Linux başlangıç modelidir. Initramfs bulunmayan sistemlerde gerçek kök dosya sistemine geçiş ve init programının başlatılması farklı şekilde gerçekleşebilir.
+
+## 10. Özet
+
+Linux çekirdeği, önyükleyicinin kontrolü devretmesiyle birlikte çalışmaya başlar.
+
+İlk olarak mimariye özgü başlangıç kodları çalıştırılır, gerekli işlemci ve bellek hazırlıkları gerçekleştirilir ve sıkıştırılmış çekirdek imajı açılır.
+
+Ardından `start_kernel()` fonksiyonu çalışarak bellek yönetimi, süreç zamanlayıcısı, kesme altyapısı ve sanal dosya sistemi gibi temel alt sistemleri hazırlar.
+
+Çekirdek başlangıç işlemlerinin devamında PID 1 görevini üstlenecek ilk kullanıcı alanı süreci hazırlanır. Initramfs kullanılıyorsa önce bu ortamın başlangıç programı çalıştırılır ve gerçek kök dosya sistemine geçiş gerçekleştirilir.
+
+Son olarak gerçek init sistemi devreye girerek servisleri başlatır ve işletim sistemini kullanıcı etkileşimine hazır hâle getirir.
 
 ## Kaynakça ve İleri Okuma
 
-1. [ArchWiki – Arch boot process](https://wiki.archlinux.org/title/Arch_boot_process)
-2. [ArchWiki – Initramfs](https://wiki.archlinux.org/title/Initramfs)
-3. [Gentoo Wiki – Bootloader](https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Bootloader)
-4. [Gentoo Wiki – Initramfs](https://wiki.gentoo.org/wiki/Initramfs)
-5. [systemd – bootup(7)](https://man.archlinux.org/man/bootup.7.en)
-6. [systemd – Initrd Interface](https://systemd.io/INITRD_INTERFACE/)
+1. [Linux Kernel Documentation – The Linux/x86 Boot Protocol](https://docs.kernel.org/arch/x86/boot.html)
+2. [Linux Kernel Source – init/main.c](https://github.com/torvalds/linux/blob/master/init/main.c)
+3. [Linux Kernel Source – arch/x86/boot](https://github.com/torvalds/linux/tree/master/arch/x86/boot)
+4. [Linux Kernel Source – arch/x86/kernel](https://github.com/torvalds/linux/tree/master/arch/x86/kernel)
+5. [Linux Kernel Documentation – Kernel Parameters](https://docs.kernel.org/admin-guide/kernel-parameters.html)
+6. [Linux Kernel Documentation – EFI Stub](https://docs.kernel.org/admin-guide/efi-stub.html)
+7. [ArchWiki – Kernel](https://wiki.archlinux.org/title/Kernel)
+8. [Gentoo Wiki – Kernel](https://wiki.gentoo.org/wiki/Kernel)
 
 ---
 
-*Not: Bu dokümanda anlatılan süreç genel Linux önyükleme mimarisini açıklar. Dağıtım, donanım, önyükleyici ve init sistemi farklılıklarına bağlı olarak bazı aşamalar değişebilir.*
+*Not: Linux çekirdeğinin başlangıç mekanizmaları işlemci mimarisine, çekirdek sürümüne, firmware türüne ve derleme yapılandırmasına göre farklılık gösterebilir. Bu bölümdeki örnekler ağırlıklı olarak x86-64 tabanlı sistemler üzerinden açıklanmıştır.*
