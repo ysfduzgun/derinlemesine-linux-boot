@@ -363,3 +363,5 @@ Her iki yapıda da önyükleyicinin Linux çekirdeğini başlatmasıyla birlikte
 ---
 
 *Not: BIOS ve UEFI arasındaki farklılıklar yalnızca önyükleme hızından ibaret değildir. Temel farklılık, firmware'in önyükleme uygulamalarını nasıl bulduğu, yüklediği ve çalıştırdığıdır. Disk bölümleme yapısı ve güvenlik mekanizmaları da bu mimarinin önemli parçalarıdır.*
+
+Firmware, seçtiği önyükleme yoluna göre bir EFI uygulamasını veya disk üzerindeki önyükleme kodunu çalıştırarak kontrolü önyükleyiciye verir. Sıradaki bölümde GRUB başta olmak üzere Linux sistemlerinde kullanılan önyükleyicilerin bu görevi nasıl yerine getirdiğine bakacağız.

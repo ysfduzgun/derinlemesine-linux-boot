@@ -350,3 +350,5 @@ Linux sisteminde terminalden shell'e kadar gerçekleşen süreç genel olarak ş
 ```
 
 Bu yapı sayesinde Linux, grafik arayüz olmadan da tamamen terminal üzerinden yönetilebilir. Sunucular, gömülü sistemler ve minimal Linux dağıtımları için TTY ve shell altyapısı temel kullanıcı etkileşim yöntemlerinden biridir.
+
+Böylece firmware'in donanımı başlatmasıyla başlayan akış, kullanıcının komut çalıştırabildiği shell oturumuna ulaşır. Bu, çalışmada izlediğimiz önyükleme zincirinin son halkasıdır.

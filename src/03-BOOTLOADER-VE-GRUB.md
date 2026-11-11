@@ -543,3 +543,5 @@ Linux sistemlerde önyükleyici seçimi yapılırken sistemin donanımı, firmwa
 ---
 
 *Not: Önyükleyici kurulumu ve yapılandırması dağıtıma, firmware mimarisine ve disk düzenine göre farklılık gösterebilir. Komut örnekleri uygulanmadan önce sistemin gerçek disk ve bölüm bilgileri kontrol edilmelidir.*
+
+Önyükleyici, seçilen çekirdek imajını ve başlangıç parametrelerini yükleyip kontrolü çekirdeğe devreder. Sıradaki bölümde çekirdeğin bu kontrolü aldıktan sonra işlemciyi, belleği ve temel alt sistemleri nasıl hazırladığını izleyeceğiz.

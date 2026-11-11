@@ -686,3 +686,5 @@ Ayrıca systemd-logind gibi bileşenler systemd'nin sunduğu diğer altyapılarl
              Kullanıma hazır
                 Linux
 ```
+
+PID 1 servisleri başlattıktan sonra kullanıcıya bir terminal oturumu sunulabilir. Sıradaki bölümde TTY ve getty'nin terminali nasıl hazırladığını, shell'in de kullanıcı komutlarını nasıl çalıştırdığını izleyeceğiz.

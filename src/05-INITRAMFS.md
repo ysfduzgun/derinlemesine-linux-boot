@@ -416,3 +416,5 @@ dmesg
 ```
 
 Bu komutlarla çekirdek parametreleri, algılanan diskler, bölüm UUID değerleri ve yüklenmiş modüller incelenebilir.
+
+Initramfs gerçek kök dosya sistemini hazırlayıp ona geçiş yaptığında, çekirdek bu sistemdeki init programını PID 1 olarak çalıştırır. Sıradaki bölümde PID 1'in servisleri ve sistemin normal çalışma ortamını nasıl yönettiğini ele alacağız.
