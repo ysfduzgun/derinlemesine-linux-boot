@@ -350,13 +350,3 @@ Linux sisteminde terminalden shell'e kadar gerçekleşen süreç genel olarak ş
 ```
 
 Bu yapı sayesinde Linux, grafik arayüz olmadan da tamamen terminal üzerinden yönetilebilir. Sunucular, gömülü sistemler ve minimal Linux dağıtımları için TTY ve shell altyapısı temel kullanıcı etkileşim yöntemlerinden biridir.
-
-## Kaynaklar
-
-- Linux Kernel Documentation – TTY: https://docs.kernel.org/driver-api/tty/
-- Linux man-pages – tty(4): https://man7.org/linux/man-pages/man4/tty.4.html
-- Linux man-pages – pts(4): https://man7.org/linux/man-pages/man4/pts.4.html
-- util-linux – agetty: https://man7.org/linux/man-pages/man8/agetty.8.html
-- Bash Reference Manual: https://www.gnu.org/software/bash/manual/
-- Debian Wiki – Shell: https://wiki.debian.org/Shell
-- OpenSSH Manual – ssh(1): https://man.openbsd.org/ssh.1

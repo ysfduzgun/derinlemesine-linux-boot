@@ -540,18 +540,6 @@ Linux sistemlerde önyükleyici seçimi yapılırken sistemin donanımı, firmwa
 - Basit bir UEFI önyükleme yapısı hedefleniyorsa.
 - Çekirdek parametreleri ve NVRAM girdileri doğrudan yönetilebiliyorsa.
 
-## Kaynakça ve İleri Okuma
-
-1. [GNU GRUB Manual](https://www.gnu.org/software/grub/manual/grub/grub.html)
-2. [ArchWiki – GRUB](https://wiki.archlinux.org/title/GRUB)
-3. [ArchWiki – systemd-boot](https://wiki.archlinux.org/title/Systemd-boot)
-4. [ArchWiki – EFISTUB](https://wiki.archlinux.org/title/EFISTUB)
-5. [Gentoo Wiki – GRUB](https://wiki.gentoo.org/wiki/GRUB)
-6. [systemd – systemd-boot](https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html)
-7. [systemd – bootctl](https://www.freedesktop.org/software/systemd/man/latest/bootctl.html)
-8. [Linux Kernel Documentation – EFI Stub](https://docs.kernel.org/admin-guide/efi-stub.html)
-9. [Linux man-pages – efibootmgr](https://man.archlinux.org/man/efibootmgr.8.en)
-
 ---
 
 *Not: Önyükleyici kurulumu ve yapılandırması dağıtıma, firmware mimarisine ve disk düzenine göre farklılık gösterebilir. Komut örnekleri uygulanmadan önce sistemin gerçek disk ve bölüm bilgileri kontrol edilmelidir.*

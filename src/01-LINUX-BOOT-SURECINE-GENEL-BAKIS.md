@@ -773,17 +773,6 @@ Ardından `start_kernel()` fonksiyonu çalışarak bellek yönetimi, süreç zam
 
 Son olarak gerçek init sistemi devreye girerek servisleri başlatır ve işletim sistemini kullanıcı etkileşimine hazır hâle getirir.
 
-## Kaynakça ve İleri Okuma
-
-1. [Linux Kernel Documentation – The Linux/x86 Boot Protocol](https://docs.kernel.org/arch/x86/boot.html)
-2. [Linux Kernel Source – init/main.c](https://github.com/torvalds/linux/blob/master/init/main.c)
-3. [Linux Kernel Source – arch/x86/boot](https://github.com/torvalds/linux/tree/master/arch/x86/boot)
-4. [Linux Kernel Source – arch/x86/kernel](https://github.com/torvalds/linux/tree/master/arch/x86/kernel)
-5. [Linux Kernel Documentation – Kernel Parameters](https://docs.kernel.org/admin-guide/kernel-parameters.html)
-6. [Linux Kernel Documentation – EFI Stub](https://docs.kernel.org/admin-guide/efi-stub.html)
-7. [ArchWiki – Kernel](https://wiki.archlinux.org/title/Kernel)
-8. [Gentoo Wiki – Kernel](https://wiki.gentoo.org/wiki/Kernel)
-
 ---
 
 *Not: Linux çekirdeğinin başlangıç mekanizmaları işlemci mimarisine, çekirdek sürümüne, firmware türüne ve derleme yapılandırmasına göre farklılık gösterebilir. Bu bölümdeki örnekler ağırlıklı olarak x86-64 tabanlı sistemler üzerinden açıklanmıştır.*

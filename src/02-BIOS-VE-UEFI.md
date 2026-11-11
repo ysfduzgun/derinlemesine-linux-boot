@@ -360,16 +360,6 @@ Linux Kernel
 
 Her iki yapıda da önyükleyicinin Linux çekirdeğini başlatmasıyla birlikte işletim sisteminin diğer açılış aşamaları devreye girer.
 
-## Kaynakça ve İleri Okuma
-
-1. [UEFI Forum – UEFI Specifications](https://uefi.org/specifications)
-2. [ArchWiki – GRUB](https://wiki.archlinux.org/title/GRUB)
-3. [ArchWiki – EFI System Partition](https://wiki.archlinux.org/title/EFI_system_partition)
-4. [ArchWiki – GUID Partition Table](https://wiki.archlinux.org/title/GUID_Partition_Table)
-5. [Gentoo Wiki – GRUB](https://wiki.gentoo.org/wiki/GRUB)
-6. [GNU GRUB Manual](https://www.gnu.org/software/grub/manual/grub/grub.html)
-7. [Linux man-pages – efibootmgr](https://man.archlinux.org/man/efibootmgr.8.en)
-
 ---
 
 *Not: BIOS ve UEFI arasındaki farklılıklar yalnızca önyükleme hızından ibaret değildir. Temel farklılık, firmware'in önyükleme uygulamalarını nasıl bulduğu, yüklediği ve çalıştırdığıdır. Disk bölümleme yapısı ve güvenlik mekanizmaları da bu mimarinin önemli parçalarıdır.*

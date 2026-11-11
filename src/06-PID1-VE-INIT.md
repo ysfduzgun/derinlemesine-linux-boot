@@ -686,16 +686,3 @@ Ayrıca systemd-logind gibi bileşenler systemd'nin sunduğu diğer altyapılarl
              Kullanıma hazır
                 Linux
 ```
-
-## Kaynaklar
-
-- Debian Wiki – Runlevels: https://wiki.debian.org/RunLevel
-- Debian FAQ – Customizing your Debian GNU/Linux system: https://www.debian.org/doc/manuals/debian-faq/customizing.html
-- SysVinit Manual: https://manpages.debian.org/bookworm/sysvinit-core/init.8.en.html
-- systemd Documentation – systemd: https://www.freedesktop.org/software/systemd/man/latest/
-- systemd Documentation – Unit Configuration: https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
-- systemd – Compatibility with SysV: https://systemd.io/INCOMPATIBILITIES/
-- OpenRC User Guide: https://github.com/OpenRC/openrc/blob/master/user-guide.md
-- OpenRC Service Script Guide: https://github.com/OpenRC/openrc/blob/master/service-script-guide.md
-- BusyBox Documentation: https://busybox.net/
-- BusyBox init – Debian Sources: https://sources.debian.org/src/busybox/1%3A1.37.0-6/init/init.c/

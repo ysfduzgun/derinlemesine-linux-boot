@@ -416,12 +416,3 @@ dmesg
 ```
 
 Bu komutlarla çekirdek parametreleri, algılanan diskler, bölüm UUID değerleri ve yüklenmiş modüller incelenebilir.
-
-## Kaynaklar
-
-- Linux Kernel Documentation – Ramfs, rootfs and initramfs: https://www.kernel.org/doc/html/latest/filesystems/ramfs-rootfs-initramfs.html
-- Linux Kernel Documentation – Using the initial RAM disk: https://docs.kernel.org/admin-guide/initrd.html
-- Debian Wiki – initramfs-tools: https://wiki.debian.org/initramfs-tools
-- Debian Wiki – Initramfs debugging: https://wiki.debian.org/InitramfsDebug
-- dracut Documentation: https://dracut-ng.github.io/dracut/
-- BusyBox: https://busybox.net/
