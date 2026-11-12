@@ -19,8 +19,7 @@ Bu bölümde çekirdeğin başlangıç kodunu, işlemci ve temel alt sistemlerin
 
 ## 1. Vmlinuz Anatomisi
 
-Modern Linux dağıtımlarında çekirdek imajı genellikle aşağıdaki dizinde bulunur:
-
+Modern Linux dağıtımlarında çekirdek imajı genellikle aşağıdaki dizinde bulunur ([18], [19], [20]):
 ```text
 /boot/vmlinuz-<kernel-version>
 ```
@@ -103,8 +102,7 @@ vmlinux ve vmlinuz birbirleriyle ilişkili olsa da doğrudan aynı dosyanın far
 
 ## 2. İşlemci Modları ve Kernel Başlangıcı
 
-Linux çekirdeğinin başlangıç sürecini anlayabilmek için işlemcinin çalışma modlarını bilmek gerekir.
-
+Linux çekirdeğinin başlangıç sürecini anlayabilmek için işlemcinin çalışma modlarını bilmek gerekir ([3], [20]).
 x86 mimarisinde işlemci, farklı bellek erişim ve çalışma yetenekleri sunan çeşitli modlarda çalışabilir.
 
 Bu modların en önemlileri şunlardır:
@@ -188,8 +186,7 @@ UEFI ve BIOS başlangıç yolları, Linux çekirdeğinin mimariye özgü başlan
 
 ## 3. Çekirdeğin Sıkıştırmasının Açılması (Decompression)
 
-Önyükleyici tarafından belleğe yüklenen çekirdek imajı, doğrudan normal çekirdek çalışma ortamına geçmeden önce kendi başlangıç kodlarını çalıştırır.
-
+Önyükleyici tarafından belleğe yüklenen çekirdek imajı, doğrudan normal çekirdek çalışma ortamına geçmeden önce kendi başlangıç kodlarını çalıştırır ([3], [20], [21]).
 Bu başlangıç kodları, mimariye ve önyükleme yöntemine bağlı olarak gerekli hazırlıkları gerçekleştirir.
 
 Özellikle x86-64 sistemlerde decompressor kodunun görevleri şunlardır:
@@ -230,8 +227,7 @@ olarak adlandırılır.
 
 ## 4. start_kernel() ve Çekirdek Alt Sistemlerinin İlklendirilmesi
 
-Linux çekirdeğinin ana başlangıç fonksiyonu olan `start_kernel()`, çekirdeğin temel çalışma altyapısının hazırlanmasından sorumludur.
-
+Linux çekirdeğinin ana başlangıç fonksiyonu olan `start_kernel()`, çekirdeğin temel çalışma altyapısının hazırlanmasından sorumludur ([21], [22]).
 Kaynak kod içerisinde:
 
 ```text
@@ -352,8 +348,7 @@ Aşağıdaki tabloda çekirdek başlangıcında karşılaşılan bazı önemli f
 
 ## 5. Çekirdek Parametreleri (Kernel Command Line)
 
-Önyükleyici, Linux çekirdeğine başlangıç sırasında kullanacağı parametreleri iletir.
-
+Önyükleyici, Linux çekirdeğine başlangıç sırasında kullanacağı parametreleri iletir [23].
 Bu parametreler Kernel Command Line olarak adlandırılır.
 
 Çekirdek parametreleri, sistemin hangi diskten başlatılacağını, hangi sürücülerin kullanılacağını, hata ayıklama seviyesini ve çeşitli donanım özelliklerinin nasıl çalışacağını belirleyebilir.
@@ -412,9 +407,7 @@ Bu işlem, normal bir kullanıcı oturumu başlatmaz ve sistem servislerini otom
 
 ## 6. PID 0 ve PID 1
 
-Linux süreç yönetimini anlayabilmek için PID kavramını bilmek gerekir.
-
-PID (Process ID), sistemde çalışan her sürece verilen benzersiz işlem numarasıdır.
+PID (Process ID), Linux’ta her sürece atanan benzersiz, negatif olmayan bir sayıdır [24].
 
 Linux sistemlerde süreçlerin oluşturulması ve yönetilmesi çekirdeğin görevlerinden biridir.
 
@@ -425,7 +418,7 @@ Linux sistemlerde süreçlerin oluşturulması ve yönetilmesi çekirdeğin gör
 
 ### 6.1. PID 0 (Idle Process)
 
-Linux çekirdeğinin başlangıç görev yapısı PID 0 olarak bilinir.
+Linux çekirdeği, açılışta `init_task` adlı ilk görevi statik olarak tanımlar ve PID 0 bu ilk görevle ilişkilidir ([22], [25], [26]).
 
 Bu görev geleneksel olarak swapper veya idle task olarak adlandırılır.
 
@@ -441,14 +434,16 @@ Modern sistemlerde işlemcinin boşta kaldığı durumlarda uygun güç tasarruf
 
 Çekirdeğin başlangıç işlemleri tamamlandığında kullanıcı alanının başlatılması gerekir.
 
-Bu aşamada `rest_init()` fonksiyonu devreye girer.
+Bu aşamada `rest_init()` fonksiyonu devreye girerek PID 1 olacak init görevini ve `kthreadd` görevini oluşturur [22].
 
 Bu fonksiyon, çekirdek başlangıcında iki önemli kernel thread oluşturur:
 
 - `kernel_init`
 - `kthreadd`
 
-Başlangıçta oluşturulan `kernel_init` görevi PID 1 numarasını alır.
+Başlangıçta oluşturulan `kernel_init` görevi PID 1 numarasını alır [22].
+
+Sonlanan bir çocuk sürecin durumu ebeveyni tarafından `wait()` ile alınmazsa süreç zombi durumunda kalır. Ebeveyni sonlanan süreçler init sürecine ya da bir subreaper sürecine aktarılır [27]. PID ad alanlarının kendi PID 1 süreci bulunur; bu süreç sonlanırsa çekirdek o ad alandaki diğer süreçleri sonlandırır [28].
 
 Daha sonra çekirdek başlangıç işlemlerini tamamlayarak ilk kullanıcı alanı programını çalıştırmaya hazırlanır.
 
@@ -501,7 +496,7 @@ PID  PPID  COMMAND  COMMAND
 
 ### PID 1 ve Kthreadd İlişkisi
 
-Linux çekirdeği, donanım ve sistem işlemlerini gerçekleştirmek için bazı özel kernel thread'ler oluşturur.
+Linux çekirdeği, donanım ve sistem işlemlerini gerçekleştirmek için bazı özel kernel thread’ler oluşturur [22].
 
 Bu thread'ler kullanıcı alanında çalışan normal programlardan farklıdır.
 
@@ -515,7 +510,7 @@ Bu süreçlerin çoğu kullanıcı alanından bağımsız olarak çekirdek içer
 
 ## 7. Kernel ve User Space (Kullanıcı Alanı)
 
-Linux işletim sisteminde bellek ve işlemci yetkileri açısından iki temel çalışma alanı bulunur:
+Uygulamalar kullanıcı alanında, çekirdek kodu ise kernel space içinde çalışır. Uygulamalar çekirdek hizmetlerine sistem çağrısı arayüzü üzerinden erişir ([29], [30]).
 
 - Kernel Space (Çekirdek Alanı)
 - User Space (Kullanıcı Alanı)
@@ -576,12 +571,11 @@ Bu mekanizma sayesinde kullanıcı uygulamaları donanımın yönetim ayrıntıl
 ## 8. Kernel Hata Ayıklama ve Sistem İnceleme
 
 Linux çekirdeği, başlangıç sırasında gerçekleştirdiği işlemlere ilişkin çeşitli mesajlar üretir.
-
 Bu mesajlar, donanımın algılanması, sürücülerin yüklenmesi, bellek yönetimi ve diğer çekirdek işlemlerinin incelenmesi için kullanılabilir.
 
 ### 8.1. dmesg
 
-`dmesg`, çekirdek tarafından üretilen mesajların halka arabelleğinden (ring buffer) okunmasını sağlar.
+`dmesg`, çekirdek halka arabelleğindeki iletileri görüntülemek için kullanılır [31].
 
 Temel kullanım:
 
@@ -617,7 +611,7 @@ Not: `dmesg -T` tarafından gösterilen zamanlar yaklaşık takvim zamanlarıdı
 
 ### 8.2. /proc/cpuinfo
 
-Çekirdeğin işlemci hakkında topladığı bilgileri görüntüler.
+Çekirdeğin işlemci hakkında sağladığı bilgiler `/proc/cpuinfo` üzerinden okunabilir [32].
 
 ```bash
 cat /proc/cpuinfo
@@ -635,7 +629,7 @@ gibi bilgiler bulunabilir.
 
 ### 8.3. /proc/meminfo
 
-Bellek yönetimiyle ilgili bilgileri gösterir.
+Bellek yönetimiyle ilgili bilgiler `/proc/meminfo` üzerinden okunabilir [33].
 
 ```bash
 cat /proc/meminfo
@@ -655,7 +649,7 @@ cat /proc/meminfo
 
 ### 8.4. /proc/cmdline
 
-Çekirdeğe önyükleyici tarafından iletilen başlangıç parametrelerini görüntüler.
+Çekirdeğe önyükleyici tarafından iletilen başlangıç parametrelerini görüntüler ([23], [34]).
 
 ```bash
 cat /proc/cmdline
@@ -663,7 +657,7 @@ cat /proc/cmdline
 
 ### 8.5. journalctl
 
-systemd kullanılan dağıtımlarda çekirdek mesajları sistem günlükleri üzerinden de incelenebilir.
+systemd kullanılan dağıtımlarda çekirdek mesajları sistem günlükleri üzerinden de incelenebilir [35].
 
 Mevcut açılışın çekirdek mesajları:
 
@@ -679,13 +673,13 @@ journalctl -k -b -1
 
 ### 8.6. lsmod ve modinfo
 
-Çekirdeğe yüklenmiş modülleri görüntülemek için:
+Yüklenmiş çekirdek modüllerini listelemek için `lsmod` kullanılır [36]:
 
 ```bash
 lsmod
 ```
 
-Bir modül hakkında ayrıntılı bilgi almak için:
+Bir modül hakkında ayrıntılı bilgi almak için `modinfo` kullanılır [37]:
 
 ```bash
 modinfo e1000e
@@ -762,6 +756,8 @@ Buradaki `e1000e`, Intel Ethernet denetleyicilerinde kullanılan sürücülerden
 **Not:** Bu akış şeması genel bir Linux başlangıç modelidir. Initramfs bulunmayan sistemlerde gerçek kök dosya sistemine geçiş ve init programının başlatılması farklı şekilde gerçekleşebilir.
 
 ## 10. Özet
+
+Bu bölümdeki başlangıç akışı, Linux çekirdeğinin mimariye ve dağıtıma göre değişen ayrıntılarıyla birlikte değerlendirilmelidir ([18], [19]).
 
 Linux çekirdeği, önyükleyicinin kontrolü devretmesiyle birlikte çalışmaya başlar.
 

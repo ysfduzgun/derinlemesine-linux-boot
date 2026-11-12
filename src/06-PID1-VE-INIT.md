@@ -1,10 +1,10 @@
 # PID 1 ve Init Sistemi
 
-Initramfs aşamasında gerçek kök dosya sistemine geçildikten sonra çekirdek, sistemin normal açılışını devam ettirecek olan init programını çalıştırır.
+Initramfs aşamasında gerçek kök dosya sistemine geçildikten sonra çekirdek, sistemin normal açılışını devam ettirecek olan init programını çalıştırır [22].
 
 Varsayılan olarak kullanılan program genellikle `/sbin/init` yolundadır. Ancak bu yol çekirdek komut satırındaki `init=` parametresiyle değiştirilebilir.
 
-Init programı, kullanıcı alanında başlatılan ilk süreçtir ve **PID 1** numarasına sahiptir.
+Init programı, kullanıcı alanında başlatılan ilk süreçtir ve **PID 1** numarasına sahiptir [22].
 
 PID 1'in temel görevleri şunlardır:
 
@@ -13,7 +13,7 @@ PID 1'in temel görevleri şunlardır:
 - Servislerin durumlarını yönetmek ve gerektiğinde yeniden başlatmak.
 - Yeni kullanıcı oturumları için gerekli süreçleri oluşturmak.
 - Sistemin kapatılması veya yeniden başlatılması sırasında gerekli işlemleri yürütmek.
-- Sahipsiz kalan çocuk süreçleri devralmak ve sonlanan süreçleri temizlemek.
+- Sahipsiz kalan çocuk süreçleri devralmak ve sonlanan süreçleri temizlemek [27].
 
 Burada önemli bir ayrım vardır: PID 1 bir süreçtir; init sistemi ise bu sürecin yürüttüğü program ve onun sağladığı sistem yönetim mekanizmalarının bütünüdür.
 
@@ -29,7 +29,7 @@ PID 1, ebeveyni sonlanmış süreçlerin devralınmasında özel bir role sahipt
 
 PID 1, çekirdek tarafından özel olarak ele alınır. Normal süreçlerden farklı olarak sistemin temel kullanıcı alanı süreçlerinin devamlılığında kritik rol oynar.
 
-PID 1 beklenmedik şekilde sonlanırsa çekirdek sistemi güvenli biçimde çalıştırmaya devam edemeyeceğinden kernel panic oluşturur.
+PID 1 beklenmedik şekilde sonlanırsa çekirdek `Attempted to kill init` hatasıyla kernel panic oluşturur [22].
 
 Örneğin:
 
@@ -38,6 +38,8 @@ Kernel panic - not syncing: Attempted to kill init!
 ```
 
 Bu nedenle PID 1 olarak çalışan programın güvenilir olması gerekir.
+
+PID ad alanlarında da ilk süreç PID 1 olur. Bu sürecin sonlanması, o ad alandaki diğer süreçlerin çekirdek tarafından sonlandırılmasına yol açar [28].
 
 ### PID 1 değiştirilebilir mi?
 
@@ -51,7 +53,7 @@ exec switch_root /root /sbin/init
 
 komutu çalıştırıldığında mevcut süreç, gerçek kök dosya sistemindeki init programını çalıştıracak şekilde değiştirilir.
 
-Burada `exec` sistem çağrısı mevcut sürecin program görüntüsünü değiştirir. Sürecin PID numarası ise 1 olarak kalır.
+Burada `exec` mevcut sürecin program görüntüsünü değiştirir; PID numarası korunur [24].
 
 Dolayısıyla:
 
@@ -78,19 +80,14 @@ Bu yazıda SysVinit, systemd, OpenRC ve BusyBox init üzerinde duracağız.
 
 | Özellik | systemd | SysVinit + SysV-rc | OpenRC | BusyBox init |
 |---|---|---|---|---|
-| Paralel başlatma | Var | Geleneksel yapıda sınırlı / yok | Yapılandırılabilir | Yerleşik bağımlılık çözümü yok |
-| Kaynak kullanımı | Daha kapsamlı | Görece düşük | Görece düşük | Çok düşük |
-| Bağımlılık yönetimi | Var | Geleneksel yapıda sınırlı | Var | Yok |
-| Servis tanımı | Unit dosyaları | Shell betikleri | Shell betikleri | inittab ve betikler |
-| Servis takibi | Var | Sınırlı | Sınırlı, ek araçlarla geliştirilebilir | Temel respawn mekanizması |
-| Kullanım alanı | Genel amaçlı | Geleneksel sistemler | Genel amaçlı | Gömülü ve minimal sistemler |
+| Yapılandırma | Unit dosyaları [43] | Runlevel ve başlangıç betikleri ([44], [45]) | Servis betikleri ([46], [47]) | `inittab` ve betikler ([38], [48]) |
+| Bağımlılık yönetimi | Unit bağımlılıkları [43] | Runlevel ve servis betikleri üzerinden ([44], [45]) | Servis bağımlılıkları ([46], [47]) | Yerleşik bağımlılık çözücüsü bulunmaz [48] |
 
 Not: SysVinit, OpenRC ve BusyBox init aynı kapsamda özellik sunmaz. Özellikle servis yönetimi, bağımlılık çözümü ve süreç denetimi açısından aralarında önemli farklar bulunur. Ayrıca OpenRC'de paralel başlatma isteğe bağlıdır.
 
 ## SysVinit
 
-SysVinit (System V init), Unix sistemlerinden gelen geleneksel init yaklaşımını Linux üzerinde uygulayan init sistemidir.
-
+SysVinit (System V init), Unix sistemlerinden gelen geleneksel init yaklaşımını Linux üzerinde uygulayan init sistemidir ([44], [45]).
 Servislerin başlatılması ve durdurulması için genellikle shell betikleri kullanılır. Sistem açılışında hangi servislerin çalıştırılacağı runlevel adı verilen çalışma seviyeleriyle belirlenir.
 
 ### Runlevel
@@ -110,7 +107,7 @@ Geleneksel SysV runlevel yapısı şöyledir:
 | 5 | Genellikle grafik arayüzlü çok kullanıcılı mod. |
 | 6 | Sistemi yeniden başlatma (Reboot). |
 
-Runlevel'ların anlamı dağıtıma göre değişebilir. Örneğin Debian'ın geleneksel SysV yapılandırmasında 2, 3, 4 ve 5 numaralı seviyeler varsayılan olarak aynı servis grubunu çalıştırır. Bu nedenle runlevel 2'nin ağ desteği olmadığı şeklinde genel bir kural bulunmaz.
+Runlevel'ların anlamı dağıtıma göre değişebilir. Örneğin Debian'ın geleneksel SysV yapılandırmasında 2, 3, 4 ve 5 numaralı seviyeler varsayılan olarak aynı servis grubunu çalıştırır [44]. Bu nedenle runlevel 2'nin ağ desteği olmadığı şeklinde genel bir kural bulunmaz.
 
 ### Servis betikleri
 
@@ -195,8 +192,7 @@ Burada `service` ve `update-rc.d` komutları SysVinit'in kendisi değil, servis 
 
 ## systemd
 
-systemd, Linux dağıtımlarında yaygın olarak kullanılan kapsamlı bir init ve sistem yönetim altyapısıdır.
-
+systemd, Linux dağıtımlarında yaygın olarak kullanılan kapsamlı bir init ve sistem yönetim altyapısıdır ([5], [43]).
 Debian, Ubuntu, Arch Linux ve Fedora gibi birçok dağıtımda varsayılan olarak kullanılır.
 
 systemd yalnızca servisleri başlatmakla kalmaz; sistem açılışını, servis bağımlılıklarını, zamanlanmış görevleri, dosya sistemi bağlama işlemlerini, oturumları ve kaynak yönetimini de üstlenebilir.
@@ -339,12 +335,11 @@ journalctl -u nginx
 
 systemd, uzun süre SysVinit servis betikleriyle geriye dönük uyumluluk sağlamıştır. Bu sayede eski `/etc/init.d/` betiklerinin bir kısmı systemd tarafından çalıştırılabilmiştir.
 
-Ancak bu uyumluluk sürüme ve dağıtımın derleme yapılandırmasına bağlıdır. systemd 260 sürümünden itibaren SysV uyumluluk desteği kaldırılmıştır. Dolayısıyla güncel sistemlerde SysV betiklerinin systemd altında çalışacağını varsaymak doğru değildir.
+Ancak bu uyumluluk sürüme ve dağıtımın derleme yapılandırmasına bağlıdır. systemd 260 sürümünden itibaren SysV uyumluluk desteği kaldırılmıştır [49]. Dolayısıyla güncel sistemlerde SysV betiklerinin systemd altında çalışacağını varsaymak doğru değildir.
 
 ## OpenRC
 
-OpenRC, modüler yapıda, shell betikleri tabanlı servis yönetimi sağlayan bir init sistemidir.
-
+OpenRC, modüler yapıda, shell betikleri tabanlı servis yönetimi sağlayan bir init sistemidir ([46], [47]).
 Gentoo ve Alpine Linux gibi dağıtımlarda kullanılabilir.
 
 OpenRC, geleneksel SysV yaklaşımının basitliğini korurken servis bağımlılıklarını çözme, runlevel yönetimi ve isteğe bağlı paralel başlatma gibi özellikler sunar.
@@ -486,8 +481,7 @@ OpenRC, servislerin açılışta otomatik çalışmasını ve bağımlılıklar�
 
 ## BusyBox init
 
-BusyBox init, BusyBox paketinin içerisinde bulunan küçük ve temel özelliklere sahip bir init uygulamasıdır.
-
+BusyBox init, BusyBox paketinin içerisinde bulunan küçük ve temel özelliklere sahip bir init uygulamasıdır ([38], [48]).
 Özellikle gömülü sistemlerde, kurtarma ortamlarında ve düşük kaynak tüketiminin önemli olduğu sistemlerde tercih edilir.
 
 SysVinit'e benzer bir `inittab` yapılandırma dosyası kullanır. Ancak geleneksel runlevel mekanizmasını desteklemez.

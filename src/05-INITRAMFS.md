@@ -16,8 +16,7 @@ Bu nedenle initramfs, yalnızca birkaç komuttan oluşan bir başlangıç betiğ
 
 ## Initramfs iç yapısı
 
-Initramfs, temel olarak `newc` biçiminde oluşturulmuş bir CPIO arşividir. Arşiv gzip, xz, zstd, lz4 gibi farklı algoritmalarla sıkıştırılabilir.
-
+Initramfs, temel olarak `newc` biçiminde oluşturulmuş bir CPIO arşividir. Arşiv gzip, xz, zstd, lz4 gibi farklı algoritmalarla sıkıştırılabilir [4].
 Çekirdek, arşivi açarak içindeki dosyaları bellekteki rootfs üzerine yerleştirir. Ardından `/init` dosyasını çalıştırır.
 
 Örnek bir initramfs dizin yapısı:
@@ -45,7 +44,7 @@ Bu yapı örnektir. Gerçek initramfs içerisindeki dosyalar kullanılan dağıt
 
 ### BusyBox
 
-BusyBox, birçok temel Linux komutunu tek bir çalıştırılabilir dosyada birleştiren bir araç paketidir.
+BusyBox, birçok temel Linux komutunu tek bir çalıştırılabilir dosyada birleştiren bir araç paketidir [38].
 
 Initramfs içerisinde tercih edilmesinin başlıca nedenleri:
 
@@ -116,8 +115,7 @@ Donanımın PCI veya USB gibi veri yollarında tanımlanması ve modüllerin do�
 
 ## init dosyası
 
-Initramfs içerisindeki `/init`, çekirdek tarafından çalıştırılan ilk kullanıcı alanı programıdır. PID 1 olarak çalışır ve gerçek kök dosya sistemine geçişi gerçekleştirir.
-
+Initramfs içerisindeki `/init`, çekirdek tarafından çalıştırılan ilk kullanıcı alanı programıdır. PID 1 olarak çalışır ve gerçek kök dosya sistemine geçişi gerçekleştirir ([4], [39]).
 Burada önemli bir ayrım vardır:
 
 - `/init`: Modern initramfs mekanizmasında kullanılan başlangıç programıdır.
@@ -178,8 +176,7 @@ Bu örnekte bazı önemli noktalar basitleştirilmiştir:
 
 ## Kernel parametrelerinin okunması
 
-Çekirdeğe verilen komut satırı parametreleri `/proc/cmdline` dosyasında bulunur.
-
+Çekirdeğe verilen komut satırı parametreleri `/proc/cmdline` dosyasında bulunur ([23], [34]).
 Örnek:
 
 ```text
@@ -248,8 +245,7 @@ Ayrıca initramfs genellikle yalnızca kök dosya sistemini hazırlar. Ayrı bir
 
 ## switch_root ve gerçek sisteme geçiş
 
-Kök dosya sistemi başarıyla bağlandıktan sonra initramfs ortamından çıkılarak gerçek sistemin kök dizinine geçilir.
-
+Kök dosya sistemi başarıyla bağlandıktan sonra initramfs ortamından çıkılarak gerçek sistemin kök dizinine geçilir [39].
 Bu işlem için yaygın olarak `switch_root` kullanılır.
 
 Örnek:
@@ -270,8 +266,7 @@ Bu işlem sırasında initramfs'in geçici kök ortamı devreden çıkarılır v
 
 ## Initramfs oluşturulması
 
-Linux dağıtımları initramfs imajlarını hazırlamak için farklı araçlar kullanır.
-
+Linux dağıtımları initramfs imajlarını hazırlamak için farklı araçlar kullanır ([40], [41]).
 | Dağıtım | Araç |
 |---|---|
 | Debian | initramfs-tools |
@@ -383,8 +378,7 @@ Bu akış genel bir örnektir. Gerçek sıralama, dağıtımın kullandığı in
 
 ## Sorun giderme
 
-Initramfs aşamasında meydana gelen hatalar genellikle kök dosya sistemine erişilememesi veya gerekli sürücülerin yüklenememesiyle ilgilidir.
-
+Initramfs aşamasında meydana gelen hatalar genellikle kök dosya sistemine erişilememesi veya gerekli sürücülerin yüklenememesiyle ilgilidir ([38], [41], [42]).
 Sık karşılaşılan sorunlar:
 
 | Sorun | Muhtemel neden |

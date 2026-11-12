@@ -10,8 +10,7 @@ Bu bölümde Linux'un terminal altyapısı, sanal konsollar, getty ve shell çal
 
 ## TTY ve Sanal Konsollar
 
-TTY (Teletypewriter), kullanıcı ile işletim sistemi arasında metin tabanlı etkileşim sağlayan terminal arayüzünü ifade eder.
-
+TTY (Teletypewriter), kullanıcı ile işletim sistemi arasında metin tabanlı etkileşim sağlayan terminal arayüzünü ifade eder ([6], [50]).
 İlk Unix sistemlerinde TTY kavramı fiziksel terminal cihazlarından gelmektedir. Günümüzde Linux, fiziksel terminallerin yanı sıra sanal konsollar ve yazılım tabanlı terminaller de destekler.
 
 ### Linux sanal konsolları
@@ -50,7 +49,7 @@ fgconsole
 
 Linux'ta terminal altyapısı yalnızca fiziksel veya sanal konsollardan ibaret değildir. Yazılım tarafından oluşturulan sözde terminaller de bulunur.
 
-PTY (Pseudo Terminal), bir programın terminal aygıtı gibi davranabilmesini sağlayan mekanizmadır.
+PTY (Pseudo Terminal), bir programın terminal aygıtı gibi davranabilmesini sağlayan mekanizmadır [51].
 
 PTY iki uçtan oluşur:
 
@@ -94,8 +93,7 @@ Bu aygıtlar, grafik terminal emülatörleri ve SSH oturumları gibi yazılım t
 
 ## Getty
 
-Getty, bir terminal üzerinde metin tabanlı çalışma ortamını hazırlayan ve terminali kullanıcı etkileşimine hazır hale getiren programdır.
-
+Getty, bir terminal üzerinde metin tabanlı çalışma ortamını hazırlayan ve terminali kullanıcı etkileşimine hazır hale getiren programdır [52].
 Genellikle init sistemi tarafından başlatılır ve ilgili TTY üzerinde çalışır.
 
 Getty'nin temel görevleri:
@@ -167,8 +165,7 @@ systemctl stop getty@tty2.service
 
 ## Shell (Kabuk)
 
-Shell, kullanıcı ile işletim sistemi arasında komut satırı üzerinden etkileşim sağlayan programdır.
-
+Shell, kullanıcı ile işletim sistemi arasında komut satırı üzerinden etkileşim sağlayan programdır ([53], [54]).
 Kullanıcının girdiği komutları yorumlar, gerekli programları çalıştırır ve sonuçları terminal üzerinden görüntüler.
 
 Shell üzerinden:
@@ -285,8 +282,7 @@ Burada `$SHELL` değişkeni genellikle kullanıcının varsayılan shell'ini gö
 
 ## SSH ve Uzaktan Terminal Erişimi
 
-SSH (Secure Shell), ağ üzerinden başka bir Linux veya Unix sistemine güvenli şekilde bağlanmayı sağlayan protokoldür.
-
+SSH (Secure Shell), ağ üzerinden başka bir Linux veya Unix sistemine güvenli şekilde bağlanmayı sağlayan protokoldür [55].
 SSH sayesinde uzak sistemde terminal oturumu açılabilir ve komut satırı üzerinden işlemler gerçekleştirilebilir.
 
 Varsayılan SSH portu TCP 22'dir.

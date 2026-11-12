@@ -8,12 +8,12 @@ Bir bilgisayarın güç düğmesine basılmasından kullanıcı kabuğunun hazı
 
 | Sıra | Aşama | Temel görevi |
 |---|---|---|
-| 1 | BIOS veya UEFI firmware | Açılışta temel donanım kontrollerini yapar, önyükleme aygıtını ve yolunu belirler; uygun önyükleme kodunu veya EFI uygulamasını çalıştırır. |
-| 2 | Önyükleyici | Başlatılacak işletim sistemi veya çekirdek sürümünü seçer; çekirdek imajını, varsa initramfs'i ve çekirdek parametrelerini belleğe yükleyip kontrolü çekirdeğe devreder. |
-| 3 | Linux çekirdeği | Kendi başlangıç kodunu çalıştırır; işlemciyi, belleği, aygıtları ve süreç yönetimi gibi temel alt sistemleri hazırlar. Sonraki aşamayı başlatmak için ilk kullanıcı alanı programını çalıştırır. |
-| 4 | Initramfs | Gerçek kök dosya sistemi hemen bağlanamıyorsa bellekte geçici bir kullanıcı alanı sağlar; sürücüleri ve depolama katmanlarını hazırlar, gerçek kök dosya sistemini bulup bağlar. |
-| 5 | Gerçek sistemin init süreci (PID 1) | Gerçek kök dosya sisteminde çalışmaya devam eder; servisleri ve sistemin normal çalışma ortamını başlatır, süreçlerin yaşam döngüsünü yönetir. |
-| 6 | Terminal ve kullanıcı shell'i | TTY ve getty gibi bileşenler üzerinden kullanıcı oturumunu hazırlar. Shell komutları yorumlar ve programların çalıştırılmasını sağlar. |
+| 1 | BIOS veya UEFI firmware | Açılışta temel donanım kontrollerini yapar, önyükleme aygıtını ve yolunu belirler; uygun önyükleme kodunu veya EFI uygulamasını çalıştırır [1]. |
+| 2 | Önyükleyici | Başlatılacak işletim sistemi veya çekirdek sürümünü seçer; çekirdek imajını, varsa initramfs'i ve çekirdek parametrelerini belleğe yükleyip kontrolü çekirdeğe devreder ([2], [3]). |
+| 3 | Linux çekirdeği | Kendi başlangıç kodunu çalıştırır; işlemciyi, belleği, aygıtları ve süreç yönetimi gibi temel alt sistemleri hazırlar. Sonraki aşamayı başlatmak için ilk kullanıcı alanı programını çalıştırır [3]. |
+| 4 | Initramfs | Gerçek kök dosya sistemi hemen bağlanamıyorsa bellekte geçici bir kullanıcı alanı sağlar; sürücüleri ve depolama katmanlarını hazırlar, gerçek kök dosya sistemini bulup bağlar [4]. |
+| 5 | Gerçek sistemin init süreci (PID 1) | Gerçek kök dosya sisteminde çalışmaya devam eder; servisleri ve sistemin normal çalışma ortamını başlatır, süreçlerin yaşam döngüsünü yönetir [5]. |
+| 6 | Terminal ve kullanıcı shell'i | TTY ve getty gibi bileşenler üzerinden kullanıcı oturumunu hazırlar. Shell komutları yorumlar ve programların çalıştırılmasını sağlar [6]. |
 
 Bu aşamalar arasında kontrolün devredilmesi, önceki bileşenin bütün işi tamamladığı anlamına gelmez. Her bileşen kendi sorumluluğunu yerine getirip bir sonrakinin başlayabileceği koşulları hazırlar. Örneğin önyükleyici çekirdeği belleğe yükler ama çekirdeğin alt sistemlerini başlatmaz; initramfs de çoğunlukla sistemi son kullanıcı ortamına getirmek yerine gerçek kök dosya sistemine geçişi hazırlar.
 

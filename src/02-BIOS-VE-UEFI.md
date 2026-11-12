@@ -34,7 +34,7 @@ BIOS, önyükleme için gerekli donanım bileşenlerini hazırlar. Depolama ayg�
 
 BIOS, seçilen önyükleme aygıtının ilk sektörünü okur. MBR bölümleme yapısı kullanılıyorsa bu sektör, geleneksel olarak 512 bayt büyüklüğündedir.
 
-MBR içerisinde üç temel bileşen bulunur:
+MBR içerisinde üç temel bileşen bulunur ([1], [7]):
 
 - **Boot Code (446 bayt):** Önyükleme işlemini başlatmak için kullanılan makine kodunu içerir.
 - **Partition Table (64 bayt):** Disk üzerindeki bölümlerin başlangıç ve bitiş bilgilerini içeren bölüm tablosudur.
@@ -78,8 +78,7 @@ MBR'nin sınırlamaları nedeniyle daha büyük diskleri ve daha esnek bölümle
 
 ## 2. UEFI (Unified Extensible Firmware Interface) ve GPT
 
-UEFI, modern bilgisayarlarda kullanılan ve geleneksel BIOS yaklaşımının yerini alan firmware arayüzü standardıdır.
-
+UEFI, modern bilgisayarlarda kullanılan ve geleneksel BIOS yaklaşımının yerini alan firmware arayüzü standardıdır [1].
 UEFI, BIOS'a kıyasla daha gelişmiş önyükleme mekanizmaları, genişletilebilir sürücü desteği, güvenlik özellikleri ve işletim sisteminden bağımsız EFI uygulamalarının çalıştırılabilmesini sağlar.
 
 UEFI'nin en önemli farklılıklarından biri, önyükleme işlemini yalnızca diskin ilk sektöründeki makine koduna bağlı olmadan gerçekleştirebilmesidir.
@@ -104,7 +103,7 @@ UEFI'nin önemli özelliklerinden biri, kendi içerisinde sürücü mimarisine s
 
 **3. GPT (GUID Partition Table):**
 
-UEFI sistemlerde yaygın olarak kullanılan disk bölümleme yapısı GPT'dir.
+UEFI sistemlerde yaygın olarak kullanılan disk bölümleme yapısı GPT'dir [8].
 
 GPT, disk bölümlerini benzersiz GUID (Globally Unique Identifier) değerleriyle tanımlar.
 
@@ -121,7 +120,7 @@ GPT yapısının önemli özellikleri şunlardır:
 
 **4. ESP (EFI System Partition):**
 
-UEFI, önyükleyici dosyalarını bulmak için EFI System Partition (ESP) adı verilen özel bir disk bölümünü kullanır.
+UEFI, önyükleyici dosyalarını bulmak için EFI System Partition (ESP) adı verilen özel bir disk bölümünü kullanır [9].
 
 ESP genellikle FAT32 dosya sistemiyle biçimlendirilir ve içerisinde EFI uygulamaları bulunur.
 
@@ -171,7 +170,7 @@ efibootmgr -v
 
 UEFI firmware'i seçilen önyükleme girdisine ait EFI uygulamasını bulur ve çalıştırır.
 
-Örneğin GRUB kullanılıyorsa `grubx64.efi` dosyası çalıştırılarak Linux çekirdeğinin yüklenmesi aşamasına geçilir.
+Örneğin GRUB kullanılıyorsa `grubx64.efi` dosyası çalıştırılarak Linux çekirdeğinin yüklenmesi aşamasına geçilir [10].
 
 UEFI sistemlerde çıkarılabilir medya ve standart önyükleme konumları için varsayılan EFI dosya yolları da tanımlanmıştır.
 
@@ -199,8 +198,7 @@ UEFI'nin grafik arayüz, fare desteği veya ağ üzerinden önyükleme gibi öze
 
 ## 3. Secure Boot (Güvenli Önyükleme)
 
-UEFI ile birlikte sunulan önemli güvenlik özelliklerinden biri Secure Boot'tur.
-
+UEFI ile birlikte sunulan önemli güvenlik özelliklerinden biri Secure Boot'tur [1].
 Secure Boot, bilgisayarın açılış sürecinde çalıştırılacak EFI uygulamalarının güvenilir imzalara sahip olup olmadığını kontrol eder.
 
 Bu mekanizma sayesinde yetkisiz veya güvenilmeyen önyükleme yazılımlarının çalıştırılması engellenebilir.
@@ -249,7 +247,6 @@ Secure Boot yalnızca UEFI ile kullanılan bir güvenlik mekanizmasıdır. Her U
 ## 5. Linux Üzerinde Sistem Türünü Kontrol Etme
 
 Çalışan Linux sisteminin BIOS (Legacy) veya UEFI modunda başlatıldığını anlamak için aşağıdaki komut kullanılabilir:
-
 ```bash
 [ -d /sys/firmware/efi ] && echo "Sistem: UEFI" || echo "Sistem: BIOS / Legacy"
 ```
@@ -275,7 +272,7 @@ ls /sys/firmware/efi/
 sudo efibootmgr -v
 ```
 
-Bu komut, firmware üzerinde kayıtlı önyükleme seçeneklerini ve EFI uygulamalarının dosya yollarını gösterir.
+Bu komut, firmware üzerinde kayıtlı önyükleme seçeneklerini ve EFI uygulamalarının dosya yollarını gösterir [11].
 
 ### Disk Bölümleme Yapısını Kontrol Etme
 

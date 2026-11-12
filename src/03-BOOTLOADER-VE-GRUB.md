@@ -20,8 +20,7 @@ Yaygın olarak kullanılan bazı önyükleme çözümleri şunlardır:
 
 ## 1. GRUB2 (GRand Unified Bootloader)
 
-GRUB2, GNU projesi kapsamında geliştirilen ve Linux dağıtımlarında yaygın olarak kullanılan gelişmiş bir önyükleyicidir.
-
+GRUB2, GNU projesi kapsamında geliştirilen ve Linux dağıtımlarında yaygın olarak kullanılan gelişmiş bir önyükleyicidir ([10], [12]).
 Modüler mimarisi, geniş dosya sistemi desteği, farklı işletim sistemlerini algılayabilmesi ve esnek yapılandırma seçenekleri sayesinde çok çeşitli sistemlerde kullanılabilir.
 
 GRUB2 hem geleneksel BIOS hem de UEFI tabanlı bilgisayarlarda çalışabilir.
@@ -38,7 +37,7 @@ GRUB'un öne çıkan özellikleri şunlardır:
 
 ### Kurulum
 
-GRUB, Linux dağıtımlarında genellikle paket yöneticisi aracılığıyla kurulur.
+GRUB, Linux dağıtımlarında genellikle paket yöneticisi aracılığıyla kurulur ([2], [10], [12]).
 
 Debian tabanlı sistemlerde:
 
@@ -249,8 +248,7 @@ Bu komutlar, kurtarma sırasında doğru çekirdek ve initramfs dosyalarının b
 
 ## 2. systemd-boot
 
-systemd-boot, systemd projesinin bir parçası olarak geliştirilen, UEFI sistemler için tasarlanmış hafif bir önyükleyicidir.
-
+systemd-boot, systemd projesinin bir parçası olarak geliştirilen, UEFI sistemler için tasarlanmış hafif bir önyükleyicidir ([13], [14]).
 Önceki adıyla Gummiboot olarak bilinen bu yazılım, basit yapılandırma yapısı ve UEFI ile doğrudan çalışabilmesi sayesinde özellikle modern Linux sistemlerde tercih edilmektedir.
 
 GRUB'dan farklı olarak BIOS (Legacy) sistemleri desteklemez. Yalnızca UEFI firmware üzerinde çalışır.
@@ -369,7 +367,7 @@ Birden fazla çekirdek sürümü kullanılacaksa her sürüm için ayrı bir yap
 
 ### systemd-boot Yönetim Komutları
 
-Kurulum durumunu kontrol etmek için:
+`bootctl`, systemd-boot kurulumunu ve önyükleme girdilerini yönetir [15]. Kurulum durumunu kontrol etmek için:
 
 ```bash
 bootctl status
@@ -399,8 +397,7 @@ sudo bootctl set-oneshot @menu
 
 ## 3. EFISTUB (EFI Boot Stub)
 
-EFISTUB (EFI Boot Stub), Linux çekirdeğinin UEFI firmware tarafından doğrudan bir EFI uygulaması olarak başlatılabilmesini sağlayan çekirdek özelliğidir.
-
+EFISTUB (EFI Boot Stub), Linux çekirdeğinin UEFI firmware tarafından doğrudan bir EFI uygulaması olarak başlatılabilmesini sağlayan çekirdek özelliğidir ([16], [17]).
 Normal bir önyükleme sürecinde UEFI önce GRUB veya systemd-boot gibi bir önyükleyiciyi çalıştırır. Bu önyükleyici Linux çekirdeğini belleğe yükler ve gerekli başlangıç parametrelerini iletir.
 
 EFISTUB kullanıldığında ise Linux çekirdeği, UEFI firmware tarafından doğrudan çalıştırılabilecek bir EFI uygulaması olarak sunulur.
